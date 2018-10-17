@@ -3,7 +3,7 @@ import numpy as np
 
 # Alexie Pogue PSET 2
 
-W=6
+W=6 # are these global variables? That's bad right?
 L=6
 x_count = range(W)
 y_count = range(L)
@@ -118,7 +118,7 @@ def trans(Pe, S, a):
             else:
                 ph_state_new = np.array([(np.asscalar(ph_state) + 1)%12])
         Sp = np.concatenate((pp_state, ph_state_new), axis=0)
-        return Sp, ph_state, facing
+        return Sp
 
 
 def R(S):
@@ -137,12 +137,120 @@ def R(S):
     return reward
 
 
+def angle_calc(S):
+    goal = np.array([3, 4])
+    position_state = S[:2]
+    if np.allclose(position_state, goal): #to avoid divide by zero if on the goal state
+        return "you've made it"
+    else:
+        heading = S[2]
+        heading_back = (heading + 6) % 12
+        if heading in np.arange(11,14)%12:
+            facing = 'north'
+        elif heading in range(2, 5):
+            facing = 'east'
+        elif heading in range(5,8):
+            facing = 'south'
+        else:
+            facing = 'west'
+        heading_vector = np.array([heading, heading_back])
+        look_ahead_n = np.array([position_state + north])
+        look_ahead_s = np.array([position_state + south])
+        look_ahead_e = np.array([position_state + east])
+        look_ahead_w = np.array([position_state + west])
+        look_ahead_position = {'north': look_ahead_n, 'south': look_ahead_s,
+                           'east': look_ahead_e, 'west': look_ahead_w}
+        goal_vector = goal - position_state
+        norm_goal_vector = goal_vector / np.linalg.norm(goal_vector)
+        look_ahead_2 = np.array([[]]) # 2D array
+        if heading in np.arange(11, 14)%12 or heading in range(5, 8):
+            if goal_vector[1] > 0:
+                look_ahead = look_ahead_position['north']
+                due = 'north'
+            elif goal_vector[1] == 0:
+                look_ahead = look_ahead_position['north']
+                look_ahead_2 = look_ahead_position['south']
+                due = 'north'
+                due2 = 'south'
+            else:
+                look_ahead = look_ahead_position['south']
+                due = 'south'
+        else:
+            if goal_vector[0] > 0:
+                look_ahead = look_ahead_position['east']
+                due = 'east'
+            elif goal_vector[0] == 0:
+                look_ahead = look_ahead_position['east']
+                look_ahead_2 = look_ahead_position['west']
+                due = 'east'
+                due2 = 'west'
+            else:
+                look_ahead = look_ahead_position['west']
+                due = 'west'
+        if np.allclose(look_ahead, goal): #to avoid divide by zero if next to the goal state (and due that direction)
+            if facing == due:
+                command = ['forwards']
+            else:
+                command = ['backwards']
+            return command
+        else:
+            look_ahead_vectors = np.concatenate((look_ahead, look_ahead_2), axis=1)
+            look_ahead_vectors = np.reshape(look_ahead_vectors, (look_ahead_vectors.shape[1]/2, 2))
+            goal_vectors_ahead = goal - look_ahead_vectors
+            heading_angles = np.array([[]])
+            for m in range(look_ahead_vectors.shape[0]):
+                norm_goal_vector_ahead = goal_vectors_ahead[m]/np.linalg.norm(goal_vectors_ahead[m])
+                angle = np.empty((1, 2))
+                for n, v in np.ndenumerate(heading_vector):
+                    angle[0][n] = np.arccos(np.dot(norm_goal_vector_ahead, rot_array[v]))
+                heading_angles = np.append(heading_angles, angle, axis=(m-1))
+            min_angle = np.amin(heading_angles)
+            if heading_angles.shape[0] == 1:
+                h = 0
+                if facing == due:
+                    translation_command = 'forwards'
+                else:
+                    translation_command = 'backwards'
+            elif heading_angles.shape[0] == 2:
+                if min_angle in heading_angles[0]:
+                    heading_angles = np.delete(heading_angles, 1, axis=0)
+                    h = 0
+                    if facing == due:
+                        translation_command = 'forwards'
+                    else:
+                        translation_command = 'backwards'
+                else:
+                    heading_angles = np.delete(heading_angles, 0, axis=0)
+                    h = 1
+                    if facing == due2:
+                        translation_command = 'forwards'
+                    else:
+                        translation_command = 'backwards'
+            if min_angle < np.pi / 12 - epsilon:
+                command = [translation_command]
+            else:
+                copy = np.squeeze(heading_angles)
+                if min_angle == copy[0]:
+                    input = heading
+                else:
+                    input = heading_back
+                cross_heading = np.concatenate((rot_array[np.asscalar(input)], np.zeros(1)), axis=0)
+                cross_next_goal = np.concatenate((goal_vectors_ahead[h][:], np.zeros(1)), axis=0)
+                rotation = np.cross(cross_heading, cross_next_goal)
+                if rotation[2] < 0:
+                    rotation_c = 'right'
+                else:
+                    rotation_c = 'left'
+                command = [translation_command,  rotation_c]
+            return heading_angles*180/np.pi, due, min_angle*180/np.pi, command
 
 # Main Function
 if __name__ == '__main__':
-    S = np.array([3, 5, 11])  # I could prerotate to 2 from 1, then tell my robot to go right and end up at 3
+    S = np.array([3, 3, 11])  # I could prerotate to 2 from 1, then tell my robot to go right and end up at 3
     Sp = np.array([3, 5, 9])
-    action = ['forwards', 'left']
+    action = ['none']
     print trans(.3, S, action)
     print Psa(.3, S, action, Sp)
-    print R(S)
+    # print R(S)
+    # print policy0(np.array([4, 5, 4]))
+    print angle_calc(S)
