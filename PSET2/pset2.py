@@ -3,254 +3,254 @@ import numpy as np
 
 # Alexie Pogue PSET 2
 
-W=6 # are these global variables? That's bad right?
-L=6
-x_count = range(W)
-y_count = range(L)
-h_count = range(12)
-epsilon = 1e-12
-north = np.array([0, 1])
-south = np.array([0, -1])
-east = np.array([1, 0])
-west = np.array([-1, 0])
-none = np.array([0, 0])
-card_direc = [north, south, east, west, none]
-clock_angle = np.arange(5 * np.pi / 2, 2 * np.pi / 3, -2 * np.pi / 12)  # heading angles
-rot_array = np.array([[np.cos(i), np.sin(i)] for i in clock_angle])  # heading vectors 2D
-S = np.array([[x, y, h] for x in x_count for y in y_count for h in h_count])
 
-class A:
-    def __init__(self): # maybe you tell it which state you want to be in, then it will output something
-        trans = ['forwards', 'backwards', 'none']
-        rot = ['right', 'left']
+class gridWorld:
+    Pe = 0
+    discount = 0.9
+    epsilon = 1e-12
+    error = 1
+    north = np.array([0, 1])
+    south = np.array([0, -1])
+    east = np.array([1, 0])
+    west = np.array([-1, 0])
+    none = np.array([0, 0])
+    card_direc = [north, south, east, west, none]
+    clock_angle = np.arange(5 * np.pi / 2, 2 * np.pi / 3, -2 * np.pi / 12)  # heading angles
+    rot_array = np.array([[np.cos(i), np.sin(i)] for i in clock_angle])  # heading vectors 2D
 
+    def __init__(self, W, L, h):
+        self.W = W
+        self.L = L
+        self.h = h
+        self.W_count = range(W)
+        self.L_count = range(L)
+        self.h_count = range(h)
+        self.S = np.array([[x, y, h] for x in self.W_count for y in self.L_count for h in self.h_count])
+        self.a = ['forwards', 'backwards', 'none', 'left', 'right']
+        self.value = np.zeros([self.L, self.W, self.h, 1])
 
-def heading_check(Pe, a, state_h, state_ph):
-    correct = 1-2*Pe
-    incorrect = Pe
-    if a.__len__() == 2:
-        if a[1] == 'left':
-            if state_ph == (state_h - 1) % 12:
-                return correct
-            else:
-                return incorrect
-        if a[1] == 'right':
-            if state_ph == (state_h + 1) % 12:
-                return correct
-            else:
-                return incorrect
-    else:
-        if state_h == state_ph:
-            return correct
+    def R(self, single_state3):
+        h = single_state3
+        if h[0] == 0 or h[0] == (self.W-1) or h[1] == 0 or h[1] == (self.L-1):
+            self.reward = -100
+        elif h[1] in range(2, 6):
+            if h[0] == 2:
+                self.reward = -1
+            elif h[0] == 4:
+                self.reward = -1
+            elif h[0] == 3 and h[1] == 4:
+                self.reward = 1
         else:
-            return incorrect
+            self.reward = 0
+        return self.reward
 
+    def p_sa(self, single_state1, single_a1, Sp):
+        correct = 1-2*self.Pe
+        incorrect = self.Pe
+        state = single_state1[:2]
+        state_p = Sp[:2]
+        move = state_p - state  # move from state to probable state
+        state_h = single_state1[2]              # heading of state
+        state_ph = Sp[2]           # heading of probable state
 
-def Psa(Pe, S, a, Sp):
-    correct = 1-2*Pe
-    incorrect = Pe
-    state = S[:2]
-    state_p = Sp[:2]
-    move = state_p - state  # move from state to probable state
-    state_h = S[2]              # heading of state
-    state_ph = Sp[2]           # heading of probable state
-
-    for k in card_direc:          # change to while loop
-        if np.allclose(move, k):
-            break
-    due = k
-    if a[0] == 'none' and np.allclose(due, none):
-        return correct
-    elif a[0] == 'forwards':
-        if np.allclose(state, state_p):
-            if state[0] == 0 and state_h in range(8, 11):
-                return heading_check(Pe, a, state_h, state_ph)
-            elif state[0] == W - 1 and state_h in range(2, 5):
-                return heading_check(Pe, a, state_h, state_ph)
-            elif state[1] == 0 and state_h in range(5, 8):
-                return heading_check(Pe, a, state_h, state_ph)
-            elif state[1] == L-1 and state_h in np.arange(11, 14)%12:
-                return heading_check(Pe, a, state_h, state_ph)
-        elif np.arccos(np.dot(due, rot_array[state_h]))<= np.pi/6 + epsilon:
-            return heading_check(Pe, a, state_h, state_ph)
-    elif a[0] == 'backwards':
-        if np.allclose(state, state_p):
-            if state[0] == 0 and state_h in range(2, 5):
-                return heading_check(Pe, a, state_h, state_ph)
-            elif state[0] == W - 1 and state_h in range(8, 11):
-                return heading_check(Pe, a, state_h, state_ph)
-            elif state[1] == 0 and state_h in np.arange(11, 14)%12:
-                return heading_check(Pe, a, state_h, state_ph)
-            elif state[1] == L-1 and state_h in range(5, 8):
-                return heading_check(Pe, a, state_h, state_ph)
-        elif np.arccos(np.dot(due, rot_array[state_h])) >= 5*np.pi / 6 - epsilon:
-            return heading_check(Pe, a, state_h, state_ph)
-    else:
-        return incorrect
-
-def trans(Pe, S, a):
-    p_state = S[:2]
-    h_state = S[2]
-    if a[0] == 'none': # this will return a tuple choose a container
-        Sp = S
-        return Sp
-    else:
-        hpos_rot = (h_state - 1) % 12
-        hneg_rot = (h_state+1) % 12
-        sample_set = [h_state, hpos_rot, hneg_rot]
-        prob_dist = [1-2*Pe, Pe, Pe]
-        sample = np.random.choice(3, 1, replace=True, p=prob_dist)
-        ph_state = np.array([sample_set[np.asscalar(sample)]])
-        for v in card_direc:  # how do i make this a while loop, look for a better way to do this
-            if np.arccos(np.dot(v, rot_array[np.asscalar(ph_state)])) <= np.pi/6 + epsilon:
-                break
-        facing = v
-        if a[0] == 'forwards':
-            pp_state = p_state + facing
-        else:
-            pp_state = p_state - facing
-        if pp_state[0] > (W-1) or pp_state[0] < 0 or pp_state[1] > (L-1) or pp_state[1] < 0:
-            pp_state = p_state
-        ph_state_new = ph_state
-        if a.__len__() == 2:
-            if a[1] == 'left':
-                ph_state_new = np.array([(np.asscalar(ph_state_new) - 1)%12])
+        def heading_check():
+            if single_a1.__len__() == 2:
+                if single_a1[1] == 'left':
+                    if state_ph == (state_h - 1) % 12:
+                        return correct
+                    else:
+                        return incorrect
+                if single_a1[1] == 'right':
+                    if state_ph == (state_h + 1) % 12:
+                        return correct
+                    else:
+                        return incorrect
             else:
-                ph_state_new = np.array([(np.asscalar(ph_state) + 1)%12])
-        Sp = np.concatenate((pp_state, ph_state_new), axis=0)
-        return Sp
-
-
-def R(S):
-    h=S
-    if h[0] == 0 or h[0] == (W-1) or h[1] == 0 or h[1] == (L-1):
-        reward = -100
-    elif h[1] in range(2, 6):
-        if h[0] == 2:
-            reward = -1
-        elif h[0] == 4:
-            reward = -1
-        elif h[0] == 3 and h[1] == 4:
-            reward = 1
-    else:
-        reward = 0
-    return reward
-
-
-def angle_calc(S):
-    goal = np.array([3, 4])
-    position_state = S[:2]
-    if np.allclose(position_state, goal): #to avoid divide by zero if on the goal state
-        return "you've made it"
-    else:
-        heading = S[2]
-        heading_back = (heading + 6) % 12
-        if heading in np.arange(11,14)%12:
-            facing = 'north'
-        elif heading in range(2, 5):
-            facing = 'east'
-        elif heading in range(5,8):
-            facing = 'south'
-        else:
-            facing = 'west'
-        heading_vector = np.array([heading, heading_back])
-        look_ahead_n = np.array([position_state + north])
-        look_ahead_s = np.array([position_state + south])
-        look_ahead_e = np.array([position_state + east])
-        look_ahead_w = np.array([position_state + west])
-        look_ahead_position = {'north': look_ahead_n, 'south': look_ahead_s,
-                           'east': look_ahead_e, 'west': look_ahead_w}
-        goal_vector = goal - position_state
-        norm_goal_vector = goal_vector / np.linalg.norm(goal_vector)
-        look_ahead_2 = np.array([[]]) # 2D array
-        if heading in np.arange(11, 14)%12 or heading in range(5, 8):
-            if goal_vector[1] > 0:
-                look_ahead = look_ahead_position['north']
-                due = 'north'
-            elif goal_vector[1] == 0:
-                look_ahead = look_ahead_position['north']
-                look_ahead_2 = look_ahead_position['south']
-                due = 'north'
-                due2 = 'south'
-            else:
-                look_ahead = look_ahead_position['south']
-                due = 'south'
-        else:
-            if goal_vector[0] > 0:
-                look_ahead = look_ahead_position['east']
-                due = 'east'
-            elif goal_vector[0] == 0:
-                look_ahead = look_ahead_position['east']
-                look_ahead_2 = look_ahead_position['west']
-                due = 'east'
-                due2 = 'west'
-            else:
-                look_ahead = look_ahead_position['west']
-                due = 'west'
-        if np.allclose(look_ahead, goal): #to avoid divide by zero if next to the goal state (and due that direction)
-            if facing == due:
-                command = ['forwards']
-            else:
-                command = ['backwards']
-            return command
-        else:
-            look_ahead_vectors = np.concatenate((look_ahead, look_ahead_2), axis=1)
-            look_ahead_vectors = np.reshape(look_ahead_vectors, (look_ahead_vectors.shape[1]/2, 2))
-            goal_vectors_ahead = goal - look_ahead_vectors
-            heading_angles = np.array([[]])
-            for m in range(look_ahead_vectors.shape[0]):
-                norm_goal_vector_ahead = goal_vectors_ahead[m]/np.linalg.norm(goal_vectors_ahead[m])
-                angle = np.empty((1, 2))
-                for n, v in np.ndenumerate(heading_vector):
-                    angle[0][n] = np.arccos(np.dot(norm_goal_vector_ahead, rot_array[v]))
-                heading_angles = np.append(heading_angles, angle, axis=(m-1))
-            min_angle = np.amin(heading_angles)
-            if heading_angles.shape[0] == 1:
-                h = 0
-                if facing == due:
-                    translation_command = 'forwards'
+                if state_h == state_ph:
+                    return correct
                 else:
-                    translation_command = 'backwards'
-            elif heading_angles.shape[0] == 2:
-                if min_angle in heading_angles[0]:
-                    heading_angles = np.delete(heading_angles, 1, axis=0)
+                    return incorrect
+        if single_a1[0] == 'none' and np.allclose(single_state1, Sp):
+            return correct
+        elif np.linalg.norm(move)==1:
+            return heading_check()
+        else:
+            return 0
+
+    def transition_function(self, Pe, single_state2, single_a2):
+        p_state = single_state2[:2]
+        h_state = single_state2[2]
+        if single_a2[0] == 'none': # this will return a tuple choose a container
+            Sp = single_state2
+            return Sp
+        else:
+            hpos_rot = (h_state - 1) % self.h
+            hneg_rot = (h_state+1) % self.h
+            sample_set = [h_state, hpos_rot, hneg_rot]
+            prob_dist = [1-2*Pe, Pe, Pe]
+            sample = np.random.choice(3, 1, replace=True, p=prob_dist)
+            ph_state = np.array([sample_set[np.asscalar(sample)]])
+            for v in self.card_direc:  # how do i make this a while loop, look for a better way to do this
+                if np.arccos(np.dot(v, self.rot_array[np.asscalar(ph_state)])) <= np.pi/6 + self.epsilon:
+                    break
+            facing = v
+            if single_a2[0] == 'forwards':
+                pp_state = p_state + facing
+            else:
+                pp_state = p_state - facing
+            if pp_state[0] > self.W-1 or pp_state[0] < 0 or pp_state[1] > self.L-1 or pp_state[1] < 0:
+                pp_state = p_state
+            ph_state_new = ph_state
+            if single_a2.__len__() == 2:
+                if single_a2[1] == 'left':
+                    ph_state_new = np.array([(np.asscalar(ph_state_new) - 1)%self.h])
+                else:
+                    ph_state_new = np.array([(np.asscalar(ph_state) + 1)%self.h])
+            Sp = np.concatenate((pp_state, ph_state_new), axis=0)
+            return Sp
+
+    def policy_pi0(self, single_state4):
+        goal = np.array([3, 4])
+        position_state = single_state4[:2]
+        if np.allclose(position_state, goal): #to avoid divide by zero if on the goal state
+            self.action0 = ['none']
+            return self.action0
+        else:
+            heading = single_state4[2]
+            heading_back = (heading + 6) % self.h
+            if heading in np.arange(11, 14) % self.h:
+                facing = 'north'
+            elif heading in range(2, 5):
+                facing = 'east'
+            elif heading in range(5, 8):
+                facing = 'south'
+            else:
+                facing = 'west'
+            heading_vector = np.array([heading, heading_back])
+            look_ahead_n = np.array([position_state + self.north])
+            look_ahead_s = np.array([position_state + self.south])
+            look_ahead_e = np.array([position_state + self.east])
+            look_ahead_w = np.array([position_state + self.west])
+            look_ahead_position = {'north': look_ahead_n, 'south': look_ahead_s,
+                                 'east': look_ahead_e, 'west': look_ahead_w}
+            goal_vector = goal - position_state
+            look_ahead_2 = np.array([[]])  # 2D array
+            if heading in np.arange(11, 14)%12 or heading in range(5, 8):
+                if goal_vector[1] > 0:
+                    look_ahead = look_ahead_position['north']
+                    due = 'north'
+                elif goal_vector[1] == 0:
+                    look_ahead = look_ahead_position['north']
+                    look_ahead_2 = look_ahead_position['south']
+                    due = 'north'
+                    due2 = 'south'
+                else:
+                    look_ahead = look_ahead_position['south']
+                    due = 'south'
+            else:
+                if goal_vector[0] > 0:
+                    look_ahead = look_ahead_position['east']
+                    due = 'east'
+                elif goal_vector[0] == 0:
+                    look_ahead = look_ahead_position['east']
+                    look_ahead_2 = look_ahead_position['west']
+                    due = 'east'
+                    due2 = 'west'
+                else:
+                    look_ahead = look_ahead_position['west']
+                    due = 'west'
+            if np.allclose(look_ahead, goal): #to avoid divide by zero if next to the goal state (and due that direction)
+                if facing == due:
+                    self.action0 = ['forwards']
+                else:
+                    self.action0 = ['backwards']
+                return self.action0
+            else:
+                look_ahead_vectors = np.concatenate((look_ahead, look_ahead_2), axis=1)
+                look_ahead_vectors = np.reshape(look_ahead_vectors, (look_ahead_vectors.shape[1]/2, 2))
+                goal_vectors_ahead = goal - look_ahead_vectors
+                heading_angles = np.array([[]])
+                for m in range(look_ahead_vectors.shape[0]):
+                    norm_goal_vector_ahead = goal_vectors_ahead[m]/np.linalg.norm(goal_vectors_ahead[m])
+                    angle = np.empty((1, 2))
+                    for n, v in np.ndenumerate(heading_vector):
+                        angle[0][n] = np.arccos(np.dot(norm_goal_vector_ahead, self.rot_array[v]))
+                    heading_angles = np.append(heading_angles, angle, axis=(m-1))
+                min_angle = np.amin(heading_angles)
+                if heading_angles.shape[0] == 1:
                     h = 0
                     if facing == due:
                         translation_command = 'forwards'
                     else:
                         translation_command = 'backwards'
-                else:
-                    heading_angles = np.delete(heading_angles, 0, axis=0)
-                    h = 1
-                    if facing == due2:
-                        translation_command = 'forwards'
+                elif heading_angles.shape[0] == 2:
+                    if min_angle in heading_angles[0]:
+                        heading_angles = np.delete(heading_angles, 1, axis=0)
+                        h = 0
+                        if facing == due:
+                            translation_command = 'forwards'
+                        else:
+                            translation_command = 'backwards'
                     else:
-                        translation_command = 'backwards'
-            if min_angle < np.pi / 12 - epsilon:
-                command = [translation_command]
-            else:
-                copy = np.squeeze(heading_angles)
-                if min_angle == copy[0]:
-                    input = heading
+                        heading_angles = np.delete(heading_angles, 0, axis=0)
+                        h = 1
+                        if facing == due2:
+                            translation_command = 'forwards'
+                        else:
+                            translation_command = 'backwards'
+                if min_angle < np.pi / 12 - self.epsilon:
+                    self.action0 = [translation_command]
                 else:
-                    input = heading_back
-                cross_heading = np.concatenate((rot_array[np.asscalar(input)], np.zeros(1)), axis=0)
-                cross_next_goal = np.concatenate((goal_vectors_ahead[h][:], np.zeros(1)), axis=0)
-                rotation = np.cross(cross_heading, cross_next_goal)
-                if rotation[2] < 0:
-                    rotation_c = 'right'
-                else:
-                    rotation_c = 'left'
-                command = [translation_command,  rotation_c]
-            return heading_angles*180/np.pi, due, min_angle*180/np.pi, command
+                    copy = np.squeeze(heading_angles)
+                    if min_angle == copy[0]:
+                        input = heading
+                    else:
+                        input = heading_back
+                    cross_heading = np.concatenate((self.rot_array[np.asscalar(input)], np.zeros(1)), axis=0)
+                    cross_next_goal = np.concatenate((goal_vectors_ahead[h][:], np.zeros(1)), axis=0)
+                    rotation = np.cross(cross_heading, cross_next_goal)
+                    if rotation[2] < 0:
+                        rotation_c = 'right'
+                    else:
+                        rotation_c = 'left'
+                    self.action0 = [translation_command,  rotation_c]
+                return self.action0
 
-# Main Function
+    def policy_matrix(self):
+        self.policy_0 = {tuple(x): self.policy_pi0(x) for x in self.S}
+        return self.policy_0
+
+    def policy_evaluation(self):
+        error = 1
+        pi0 = self.policy_matrix()
+        while error > self.epsilon:
+            prev_value = np.copy(self.value)
+            for state in self.S:
+                value_func = np.empty(3)
+                action = pi0[tuple(state)]
+                statek_plus1 = state
+                pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1)%self.h
+                pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1)%self.h
+                statek = self.transition_function(0, statek_plus1, action)
+                statek_left = self.transition_function(0, pre_rotate_left, action)
+                statek_right = self.transition_function(0, pre_rotate_right, action)
+                probable_states = np.array([statek, statek_left, statek_right])
+                for v, s_ in enumerate(probable_states):
+                    value_func[v] = np.dot(self.p_sa(statek_plus1, action, s_), (self.R(s_) + self.discount*self.value[s_[0]][s_[1]][s_[2]]))
+                self.value[statek_plus1[0]][statek_plus1[1]][statek_plus1[2]] = sum(value_func)
+            error = np.array(np.amax([(self.value[x][y][z] - prev_value[x][y][z])**2 for x in self.L_count for y in self.W_count for z in self.h_count]))
+            print error
+        return self.value
+
+
 if __name__ == '__main__':
-    S = np.array([3, 3, 11])  # I could prerotate to 2 from 1, then tell my robot to go right and end up at 3
-    Sp = np.array([3, 5, 9])
-    action = ['none']
-    print trans(.3, S, action)
-    print Psa(.3, S, action, Sp)
-    # print R(S)
-    # print policy0(np.array([4, 5, 4]))
-    print angle_calc(S)
+    example = gridWorld(6, 6, 12)
+    single_state = np.array([1, 1, 1])
+    Sp = np.array([1, 0, 0])
+    action = ['backwards', 'left']
+    print example.transition_function(0, single_state, action)
+    print example.p_sa(single_state, action, Sp)
+    print example.R(single_state)
+    print example.policy_pi0(single_state)
+    print example.transition_function(0, np.array([2, 0, 8]), ['backwards'])
+    print example.policy_evaluation()
