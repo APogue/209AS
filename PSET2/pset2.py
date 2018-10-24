@@ -1,6 +1,7 @@
 
 import numpy as np
 
+
 # Alexie Pogue PSET 2
 
 
@@ -17,6 +18,7 @@ class gridWorld:
     card_direc = [north, south, east, west, none]
     clock_angle = np.arange(5 * np.pi / 2, 2 * np.pi / 3, -2 * np.pi / 12)  # heading angles
     rot_array = np.array([[np.cos(i), np.sin(i)] for i in clock_angle])  # heading vectors 2D
+    a = []
 
     def __init__(self, W, L, h):
         self.W = W
@@ -26,16 +28,29 @@ class gridWorld:
         self.L_count = range(L)
         self.h_count = range(h)
         self.S = np.array([[x, y, h] for x in self.W_count for y in self.L_count for h in self.h_count])
-        self.a = ['forwards', 'backwards', 'none', 'left', 'right']
-        self.value = np.zeros([self.L, self.W, self.h, 1])
+        self.policy_0 = {}
+        self.policy_i = {}
+        self.goal_states = []
+        self.reward = 0
+
+    def goal(self, heading):
+        if heading == 'all':
+            self.goal_states = set((3, 4, h) for h in self.h_count)
+        else:
+            self.goal_states = set((3, 4, h) for h in range(5, 8))
+        return self.goal_states
+
+    def A(self):
+        self.a = [['forwards'], ['forwards', 'right'], ['forwards', 'left'], ['backwards'], ['backwards', 'right'], ['backwards', 'left'], ['none']]
+        return self.a
 
     def R(self, single_state3):
         h = single_state3
-        if h[0] == 0 or h[0] == (self.W-1) or h[1] == 0 or h[1] == (self.L-1):
+        if h[0] <= 0 or h[0] >= (self.W-1) or h[1] <= 0 or h[1] >= (self.L-1):
             self.reward = -100
-        elif h[1] in range(2, 6):
+        elif h[1] in range(2, 5):
             if h[0] == 2:
-                self.reward = -1
+                self.reward = - 1
             elif h[0] == 4:
                 self.reward = -1
             elif h[0] == 3 and h[1] == 4:
@@ -72,7 +87,7 @@ class gridWorld:
                     return incorrect
         if single_a1[0] == 'none' and np.allclose(single_state1, Sp):
             return correct
-        elif np.linalg.norm(move)==1:
+        elif np.linalg.norm(move) <= 1:
             return heading_check()
         else:
             return 0
@@ -220,37 +235,117 @@ class gridWorld:
         self.policy_0 = {tuple(x): self.policy_pi0(x) for x in self.S}
         return self.policy_0
 
-    def policy_evaluation(self):
+    def policy_evaluation(self, policy):
         error = 1
-        pi0 = self.policy_matrix()
+        policy_i = policy
+        value = np.zeros([self.L, self.W, self.h, 1])
+        goal_states = self.goal('all')
         while error > self.epsilon:
-            prev_value = np.copy(self.value)
+            prev_value = np.copy(value)
             for state in self.S:
-                value_func = np.empty(3)
-                action = pi0[tuple(state)]
+                value_func = np.zeros(3)
+                action = policy_i[tuple(state)]
                 statek_plus1 = state
-                pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1)%self.h
-                pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1)%self.h
+                if tuple(state) not in goal_states:
+                #if state in self.S:
+                    pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1)%self.h
+                    pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1)%self.h
+                    statek = self.transition_function(0, statek_plus1, action)
+                    statek_left = self.transition_function(0, pre_rotate_left, action)
+                    statek_right = self.transition_function(0, pre_rotate_right, action)
+                    probable_states = np.array([statek, statek_left, statek_right])
+                    for v, s_ in enumerate(probable_states):
+                        value_func[v] = np.dot(self.p_sa(statek_plus1, action, s_), (self.R(statek_plus1) + self.discount*value[s_[0]][s_[1]][s_[2]]))
+                else:
+                    value_func[0] = self.R(statek_plus1)
+                value[statek_plus1[0]][statek_plus1[1]][statek_plus1[2]] = sum(value_func)
+            error = np.array(np.amax([(value[x][y][z] - prev_value[x][y][z])**2 for x in self.L_count for y in self.W_count for z in self.h_count]))
+        return value
+
+    def policy_extraction(self, value):
+        policy_i = {}
+        a = self.A()
+        for state in self.S:
+            Q_state = np.empty(3)
+            Q_value = np.empty(7)
+            statek_plus1 = state
+            pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1) % self.h
+            pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1) % self.h
+            for p, action in enumerate(a):
                 statek = self.transition_function(0, statek_plus1, action)
                 statek_left = self.transition_function(0, pre_rotate_left, action)
                 statek_right = self.transition_function(0, pre_rotate_right, action)
                 probable_states = np.array([statek, statek_left, statek_right])
                 for v, s_ in enumerate(probable_states):
-                    value_func[v] = np.dot(self.p_sa(statek_plus1, action, s_), (self.R(s_) + self.discount*self.value[s_[0]][s_[1]][s_[2]]))
-                self.value[statek_plus1[0]][statek_plus1[1]][statek_plus1[2]] = sum(value_func)
-            error = np.array(np.amax([(self.value[x][y][z] - prev_value[x][y][z])**2 for x in self.L_count for y in self.W_count for z in self.h_count]))
-            print error
-        return self.value
+                    Q_state[v] = np.dot(self.p_sa(statek_plus1, action, s_),
+                                           (self.R(statek_plus1) + self.discount * value[s_[0]][s_[1]][s_[2]]))
+                Q_value[p] = sum(Q_state)
+            policy_i[tuple(state)] = a[np.argmax(Q_value)]
+        return policy_i
+
+    def policy_iteration(self, policy0):
+        policy = policy0
+        old_policy = 1
+        new_policy = {}
+        while cmp(old_policy, new_policy) != 0:
+            old_policy = dict.copy(policy)
+            value = self.policy_evaluation(policy)
+            #print value[1][2][8]
+            new_policy = self.policy_extraction(value)
+            policy = new_policy
+        return policy
+
+    def value_iteration(self):
+        error = 1
+        value_star = np.zeros([self.L, self.W, self.h, 1])
+        goal_states = self.goal('all')
+        a = self.A()
+        while error > self.epsilon:
+            prev_value = np.copy(value_star)
+            for state in self.S:
+                Q_state = np.zeros(3)
+                Q_value = np.zeros(7)
+                statek_plus1 = state
+                if tuple(state) not in goal_states:
+                #if state in self.S:
+                    pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1) % self.h
+                    pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1) % self.h
+                    for p, action in enumerate(a):
+                        statek = self.transition_function(0, statek_plus1, action)
+                        statek_left = self.transition_function(0, pre_rotate_left, action)
+                        statek_right = self.transition_function(0, pre_rotate_right, action)
+                        probable_states = np.array([statek, statek_left, statek_right])
+                        for v, s_ in enumerate(probable_states):
+                            Q_state[v] = np.dot(self.p_sa(statek_plus1, action, s_),
+                                                (self.R(statek_plus1) + self.discount * value_star[s_[0]][s_[1]][s_[2]]))
+                        Q_value[p] = sum(Q_state)
+                else:
+                    Q_value[0] = self.R(statek_plus1)
+                value_star[statek_plus1[0]][statek_plus1[1]][statek_plus1[2]] = np.amax(Q_value)
+            error = np.array(np.amax([(value_star[x][y][z] - prev_value[x][y][z])**2 for x in self.L_count for y in self.W_count for z in self.h_count]))
+        optimal_policy = self.policy_extraction(value_star)
+        return optimal_policy
+
+
 
 
 if __name__ == '__main__':
     example = gridWorld(6, 6, 12)
-    single_state = np.array([1, 1, 1])
+    single_state = np.array([3, 0, 0])
     Sp = np.array([1, 0, 0])
-    action = ['backwards', 'left']
-    print example.transition_function(0, single_state, action)
-    print example.p_sa(single_state, action, Sp)
-    print example.R(single_state)
-    print example.policy_pi0(single_state)
-    print example.transition_function(0, np.array([2, 0, 8]), ['backwards'])
-    print example.policy_evaluation()
+    action1 = ['backwards', 'left']
+    #print example.transition_function(0, single_state, action1)
+    # print example.p_sa(single_state, action, Sp)
+    #print example.R(single_state)
+    #print example.policy_pi0(single_state)
+    # print example.transition_function(0, np.array([2, 0, 8]), ['backwards'])
+    policy0 = example.policy_matrix()
+    # print policy0[(1, 2, 8)]
+    # val = example.policy_evaluation(policy0)
+    # print val[1][2][8]
+    # policy1 = example.policy_extraction(val)
+    # print policy1[(1, 2, 8)]
+    this = example.policy_iteration(policy0)
+    print this
+    that = example.value_iteration()
+    print that
