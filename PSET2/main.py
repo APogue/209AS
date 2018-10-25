@@ -34,7 +34,7 @@ while state not in possible_goal_states:
     grid_world.updateState(state)
     #grid_world.updateValue(state)
 grid_world.plotTrajectoryGradient()
-grid_world.saveFigure('trajectory', 'Initial Policy \pi_0', '.pdf')
+grid_world.saveFigure('trajectory', 'Initial Policy', '.pdf')
 #grid_world.saveFigure('value', 'someValue', '.pdf')
 
 print trajectory
