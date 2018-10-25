@@ -20,26 +20,34 @@ REWARD_MATRIX[4, 3] = 1
 # create grid world object
 grid_world = gridWorld('6x6 grid', REWARD_MATRIX, possible_goal_states)
 
-
-
+# generate and plot a trajectory
 state = (1, 4, 6)
 trajectory = [state]
-
+actionMatrix = example.policy_matrix()
+valuePi0 = example.policy_evaluation(actionMatrix)
+trajectory_value = [valuePi0[1][4][6]]
 while state not in possible_goal_states:
-    actionMatrix = example.policy_matrix()
+    x = state[0]
+    y = state[1]
+    h = state[2]
     action = actionMatrix[state]
-    transition = example.transition_function(0, state, action)
+    transition = example.transition_function(.25, state, action)
     state = tuple(transition)
     trajectory.append(state)
     grid_world.updateState(state)
-    #grid_world.updateValue(state)
+    value = valuePi0[x][y][h]
+    trajectory_value.append(value)
+    grid_world.updateValue(value)
 grid_world.plotTrajectoryGradient()
-grid_world.saveFigure('trajectory', 'Initial Policy', '.pdf')
-#grid_world.saveFigure('value', 'someValue', '.pdf')
-
+grid_world.saveFigure('trajectory', 'Initial Policy pe of pt25', '.pdf')
+grid_world.saveFigure('value', 'Iniital Policy Value pe of pt25', '.pdf')
 print trajectory
+print trajectory_value
 
-# grid_world.saveFigure('trajectory', 'someName', '.pdf')
-# grid_world.saveFigure('value', 'someValue', '.pdf')
+
+
+
+
+
 
 raw_input('Press Enter when finished')
