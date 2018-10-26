@@ -340,12 +340,13 @@ if __name__ == '__main__':
     #print example.policy_pi0(single_state)
     # print example.transition_function(0, np.array([2, 0, 8]), ['backwards'])
     policy0 = example.policy_matrix()
+    print policy0
     # print policy0[(1, 2, 8)]
     # val = example.policy_evaluation(policy0)
     # print val[1][2][8]
     # policy1 = example.policy_extraction(val)
     # print policy1[(1, 2, 8)]
-    this = example.policy_iteration(policy0)
-    print this
-    that = example.value_iteration()
-    print that
+    # this = example.policy_iteration(policy0)
+    # print this
+    # that = example.value_iteration()
+    # print that
