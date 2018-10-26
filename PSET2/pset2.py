@@ -3,13 +3,15 @@ import numpy as np
 from time import clock
 import visuals
 from visuals import gridWorld
+# CODE DEBUG VERSION
+
 # Alexie Pogue PSET 2
 
 
 class gridWorlds:
     '''Creates a Grid World object based on grid L and W'''
     # necessary attributes used by functions
-    Pe = 0
+    Pe = .25  ### cannot forget to change this value!
     discount = 0.9
     epsilon = 1e-12
     error = 1
@@ -41,7 +43,7 @@ class gridWorlds:
         if heading == 'all':
             self.goal_states = set((3, 4, h) for h in self.h_count)
         else:
-            self.goal_states = set((3, 4, h) for h in range(6, 7))
+            self.goal_states = set((3, 4, h) for h in range(5, 8))
         return self.goal_states
 
     def A(self):
@@ -268,6 +270,26 @@ class gridWorlds:
                     probable_states = np.array([statek, statek_left, statek_right])
                     for v, s_ in enumerate(probable_states):
                         value_func[v] = np.dot(self.p_sa(statek_plus1, action, s_), (self.R(statek_plus1) + self.discount*value[s_[0]][s_[1]][s_[2]]))
+                        if np.allclose(statek_plus1, np.array([3,3,7])):
+                            print '3,3,7'
+                            print s_
+                            print action
+                            print 'probability'
+                            print self.p_sa(statek_plus1, action, s_)
+                            print 'reward'
+                            print self.R(statek_plus1)
+                            print 'future value'
+                            print self.discount*value[s_[0]][s_[1]][s_[2]]
+                        elif np.allclose(statek_plus1, np.array([3,3,6])):
+                            print '3,3,6'
+                            print s_
+                            print action
+                            print 'probability'
+                            print self.p_sa(statek_plus1, action, s_)
+                            print 'reward'
+                            print self.R(statek_plus1)
+                            print 'future value'
+                            print self.discount*value[s_[0]][s_[1]][s_[2]]
                 else:
                     value_func[0] = self.R(statek_plus1)
                 value[statek_plus1[0]][statek_plus1[1]][statek_plus1[2]] = sum(value_func)
@@ -320,8 +342,8 @@ class gridWorlds:
                 Q_state = np.zeros(3)
                 Q_value = np.zeros(7)
                 statek_plus1 = state
-                if tuple(state) not in goal_states:
-                #if state in self.S:
+                #if tuple(state) not in goal_states:
+                if state in self.S:
                     pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1) % self.h
                     pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1) % self.h
                     for p, action in enumerate(a):
@@ -343,9 +365,9 @@ class gridWorlds:
 
 if __name__ == '__main__':
     example = gridWorlds(6, 6, 12)
-    possible_goal_states = example.goal('all')
+    possible_goal_states = example.goal('not all')
 
-    # policy extraction
+    #policy extraction
     begin = clock()
     state = (1, 4, 6)
     trajectory = [state]
@@ -357,7 +379,7 @@ if __name__ == '__main__':
     while state not in possible_goal_states:
         prev_value = value
         action = optPolicyMatrix[state]
-        transition = example.transition_function(0, state, action)
+        transition = example.transition_function(.25, state, action)
         state = tuple(transition)
         trajectory.append(state)
         x = state[0]
@@ -369,32 +391,37 @@ if __name__ == '__main__':
             break
     print trajectory
     print trajectory_value
+    print valuePiStar[3][3][6]
+    print valuePiStar[3][3][7]
     end = clock()
     print " policy iteration timer", end - begin
 
     # value iteration
-    begin = clock()
-    state = (1, 4, 6)
-    trajectory = [state]
-    optPolicyMatrix = example.value_iteration()
-    valuePiStar = example.policy_evaluation(optPolicyMatrix)
-    value = valuePiStar[1][4][6]
-    trajectory_value = [value]
-    while state not in possible_goal_states:
-        prev_value = value
-        action = optPolicyMatrix[state]
-        transition = example.transition_function(0, state, action)
-        state = tuple(transition)
-        trajectory.append(state)
-        x = state[0]
-        y = state[1]
-        h = state[2]
-        value = valuePiStar[x][y][h]
-        trajectory_value.append(value)
-        if prev_value == value:
-            break
-    print trajectory
-    print trajectory_value
-    end = clock()
-    print " value iteration timer", end - begin
+    # begin = clock()
+    # state = (1, 4, 6)
+    # trajectory = [state]
+    # optPolicyMatrix = example.value_iteration()
+    # valuePiStar = example.policy_evaluation(optPolicyMatrix)
+    # value = valuePiStar[1][4][6]
+    # trajectory_value = [value]
+    # act = []
+    # while state not in possible_goal_states:
+    #     action = optPolicyMatrix[state]
+    #     act.append(action)
+    #     prev_value = value
+    #     transition = example.transition_function(.1, state, action)
+    #     state = tuple(transition)
+    #     trajectory.append(state)
+    #     x = state[0]
+    #     y = state[1]
+    #     h = state[2]
+    #     value = valuePiStar[x][y][h]
+    #     trajectory_value.append(value)
+    #     if prev_value == value:
+    #         break
+    # print trajectory
+    # print act
+    # print trajectory_value
+    # end = clock()
+    # print " value iteration timer", end - begin
 
