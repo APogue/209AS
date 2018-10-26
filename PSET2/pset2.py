@@ -1,11 +1,11 @@
 
 import numpy as np
-
-
+import visuals
+from visuals import gridWorld
 # Alexie Pogue PSET 2
 
 
-class gridWorld:
+class gridWorlds:
     Pe = 0
     discount = 0.9
     epsilon = 1e-12
@@ -44,17 +44,18 @@ class gridWorld:
         self.a = [['forwards'], ['forwards', 'right'], ['forwards', 'left'], ['backwards'], ['backwards', 'right'], ['backwards', 'left'], ['none']]
         return self.a
 
-    def R(self, single_state3):
-        h = single_state3
+    def R(self, single_state):
+        goal_states = self.goal('not all')
+        h = single_state
         if h[0] <= 0 or h[0] >= (self.W-1) or h[1] <= 0 or h[1] >= (self.L-1):
             self.reward = -100
         elif h[1] in range(2, 5):
             if h[0] == 2:
-                self.reward = - 1
+                self.reward = -10
             elif h[0] == 4:
-                self.reward = -1
-            elif h[0] == 3 and h[1] == 4:
-                self.reward = 1
+                self.reward = -10
+            elif tuple(h) in goal_states:
+                self.reward = 10
         else:
             self.reward = 0
         return self.reward
@@ -239,15 +240,15 @@ class gridWorld:
         error = 1
         policy_i = policy
         value = np.zeros([self.L, self.W, self.h, 1])
-        goal_states = self.goal('all')
+        goal_states = self.goal('not all')
         while error > self.epsilon:
             prev_value = np.copy(value)
             for state in self.S:
                 value_func = np.zeros(3)
                 action = policy_i[tuple(state)]
                 statek_plus1 = state
-                if tuple(state) not in goal_states:
-                #if state in self.S:
+                #if tuple(state) not in goal_states:
+                if state in self.S:
                     pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1)%self.h
                     pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1)%self.h
                     statek = self.transition_function(0, statek_plus1, action)
@@ -290,7 +291,6 @@ class gridWorld:
         while cmp(old_policy, new_policy) != 0:
             old_policy = dict.copy(policy)
             value = self.policy_evaluation(policy)
-            #print value[1][2][8]
             new_policy = self.policy_extraction(value)
             policy = new_policy
         return policy
@@ -298,7 +298,7 @@ class gridWorld:
     def value_iteration(self):
         error = 1
         value_star = np.zeros([self.L, self.W, self.h, 1])
-        goal_states = self.goal('all')
+        goal_states = self.goal('not all')
         a = self.A()
         while error > self.epsilon:
             prev_value = np.copy(value_star)
@@ -327,26 +327,37 @@ class gridWorld:
         return optimal_policy
 
 
-
-
 if __name__ == '__main__':
-    example = gridWorld(6, 6, 12)
+    example = gridWorlds(6, 6, 12)
     single_state = np.array([3, 0, 0])
     Sp = np.array([1, 0, 0])
     action1 = ['backwards', 'left']
-    #print example.transition_function(0, single_state, action1)
+    print example.transition_function(0, single_state, action1)
     # print example.p_sa(single_state, action, Sp)
     #print example.R(single_state)
     #print example.policy_pi0(single_state)
     # print example.transition_function(0, np.array([2, 0, 8]), ['backwards'])
+<<<<<<< HEAD
     policy0 = example.policy_matrix()
     print policy0
+=======
+    #policy0 = example.policy_matrix()
+>>>>>>> 181ac90b5a7d4cb7473d0b8a10ebc309cf55a0f7
     # print policy0[(1, 2, 8)]
     # val = example.policy_evaluation(policy0)
     # print val[1][2][8]
     # policy1 = example.policy_extraction(val)
     # print policy1[(1, 2, 8)]
+<<<<<<< HEAD
     # this = example.policy_iteration(policy0)
     # print this
     # that = example.value_iteration()
     # print that
+=======
+    #this = example.policy_iteration(policy0)
+    #print this
+    #that = example.value_iteration()
+    #print that
+
+
+>>>>>>> 181ac90b5a7d4cb7473d0b8a10ebc309cf55a0f7
