@@ -11,7 +11,6 @@ from visuals import gridWorld
 class gridWorlds:
     '''Creates a Grid World object based on grid L and W'''
     # necessary attributes used by functions
-    Pe = .25  ### cannot forget to change this value!
     discount = 0.9
     epsilon = 1e-12
     error = 1
@@ -25,7 +24,8 @@ class gridWorlds:
     rot_array = np.array([[np.cos(i), np.sin(i)] for i in clock_angle])  # heading vectors 2D
     a = []
 
-    def __init__(self, W, L, h):
+    def __init__(self, W, L, h, Pe, desired_goal):
+        self.Pe = Pe
         self.W = W
         self.L = L
         self.h = h
@@ -37,13 +37,14 @@ class gridWorlds:
         self.policy_i = {}
         self.goal_states = []
         self.reward = 0
+        self.desired_goal = desired_goal
 
     def goal(self, heading):
     # used to change goal states
         if heading == 'all':
             self.goal_states = set((3, 4, h) for h in self.h_count)
         else:
-            self.goal_states = set((3, 4, h) for h in range(5, 8))
+            self.goal_states = set((3, 4, h) for h in range(6, 7))
         return self.goal_states
 
     def A(self):
@@ -53,7 +54,7 @@ class gridWorlds:
 
     def R(self, single_state):
     # reward function, returns a reward for a single state input
-        goal_states = self.goal('all')
+        goal_states = self.goal(self.desired_goal)
         h = single_state
         if h[0] <= 0 or h[0] >= (self.W-1) or h[1] <= 0 or h[1] >= (self.L-1):
             self.reward = -100
@@ -64,10 +65,11 @@ class gridWorlds:
                 self.reward = -10
             elif tuple(h) in goal_states:
                 self.reward = 10
+            else:
+                self.reward = 0
         else:
             self.reward = 0
         return self.reward
-
     def p_sa(self, single_state1, single_a1, Sp):
     # transition function given a single state input and single action input, output is probability
         correct = 1-2*self.Pe
@@ -97,12 +99,14 @@ class gridWorlds:
                     return incorrect
         if single_a1[0] == 'none' and np.allclose(single_state1, Sp):
             return correct
+        elif single_a1[0] == 'none' and np.allclose(single_state1, Sp) is False:
+            return 0
         elif np.linalg.norm(move) <= 1:
             return heading_check()
         else:
             return 0
 
-    def transition_function(self, Pe, single_state2, single_a2):
+    def transition_function(self, Pe1, single_state2, single_a2):
     # single state input and s' output depeding on probability distribution
         p_state = single_state2[:2]
         h_state = single_state2[2]
@@ -113,7 +117,7 @@ class gridWorlds:
             hpos_rot = (h_state - 1) % self.h
             hneg_rot = (h_state+1) % self.h
             sample_set = [h_state, hpos_rot, hneg_rot]
-            prob_dist = [1-2*Pe, Pe, Pe]
+            prob_dist = [1-2*Pe1, Pe1, Pe1]
             sample = np.random.choice(3, 1, replace=True, p=prob_dist)
             ph_state = np.array([sample_set[np.asscalar(sample)]])
             for v in self.card_direc:  # how do i make this a while loop, look for a better way to do this
@@ -253,7 +257,7 @@ class gridWorlds:
         error = 1
         policy_i = policy
         value = np.zeros([self.L, self.W, self.h, 1])
-        goal_states = self.goal('all')
+        goal_states = self.goal(self.desired_goal)
         while error > self.epsilon:
             prev_value = np.copy(value)
             for state in self.S:
@@ -270,26 +274,6 @@ class gridWorlds:
                     probable_states = np.array([statek, statek_left, statek_right])
                     for v, s_ in enumerate(probable_states):
                         value_func[v] = np.dot(self.p_sa(statek_plus1, action, s_), (self.R(statek_plus1) + self.discount*value[s_[0]][s_[1]][s_[2]]))
-                        if np.allclose(statek_plus1, np.array([3,3,7])):
-                            print '3,3,7'
-                            print s_
-                            print action
-                            print 'probability'
-                            print self.p_sa(statek_plus1, action, s_)
-                            print 'reward'
-                            print self.R(statek_plus1)
-                            print 'future value'
-                            print self.discount*value[s_[0]][s_[1]][s_[2]]
-                        elif np.allclose(statek_plus1, np.array([3,3,6])):
-                            print '3,3,6'
-                            print s_
-                            print action
-                            print 'probability'
-                            print self.p_sa(statek_plus1, action, s_)
-                            print 'reward'
-                            print self.R(statek_plus1)
-                            print 'future value'
-                            print self.discount*value[s_[0]][s_[1]][s_[2]]
                 else:
                     value_func[0] = self.R(statek_plus1)
                 value[statek_plus1[0]][statek_plus1[1]][statek_plus1[2]] = sum(value_func)
@@ -301,8 +285,8 @@ class gridWorlds:
         policy_i = {}
         a = self.A()
         for state in self.S:
-            Q_state = np.empty(3)
-            Q_value = np.empty(7)
+            Q_state = np.zeros(3)
+            Q_value = np.zeros(7)
             statek_plus1 = state
             pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1) % self.h
             pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1) % self.h
@@ -315,7 +299,7 @@ class gridWorlds:
                     Q_state[v] = np.dot(self.p_sa(statek_plus1, action, s_),
                                            (self.R(statek_plus1) + self.discount * value[s_[0]][s_[1]][s_[2]]))
                 Q_value[p] = sum(Q_state)
-            policy_i[tuple(state)] = a[np.argmax(Q_value)]
+            policy_i[tuple(state)] = a[np.asscalar(np.argmax(Q_value))]
         return policy_i
 
     def policy_iteration(self, policy0):
@@ -334,7 +318,7 @@ class gridWorlds:
         # returns a 4D array of optimal values
         error = 1
         value_star = np.zeros([self.L, self.W, self.h, 1])
-        goal_states = self.goal('all')
+        goal_states = self.goal(self.desired_goal)
         a = self.A()
         while error > self.epsilon:
             prev_value = np.copy(value_star)
@@ -342,8 +326,8 @@ class gridWorlds:
                 Q_state = np.zeros(3)
                 Q_value = np.zeros(7)
                 statek_plus1 = state
-                #if tuple(state) not in goal_states:
-                if state in self.S:
+                if tuple(state) not in goal_states:
+                #if state in self.S:
                     pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1) % self.h
                     pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1) % self.h
                     for p, action in enumerate(a):
@@ -360,68 +344,67 @@ class gridWorlds:
                 value_star[statek_plus1[0]][statek_plus1[1]][statek_plus1[2]] = np.amax(Q_value)
             error = np.array(np.amax([(value_star[x][y][z] - prev_value[x][y][z])**2 for x in self.L_count for y in self.W_count for z in self.h_count]))
         optimal_policy = self.policy_extraction(value_star)
-        return optimal_policy
+        return optimal_policy, value_star
 
 
 if __name__ == '__main__':
-    example = gridWorlds(6, 6, 12)
+    # plot the trajectories
+    Pe0 = 0
+    example = gridWorlds(6, 6, 12, Pe0, 'not all')
     possible_goal_states = example.goal('not all')
+    state0 = (1, 4, 6)
+    trajectory = [state0]
 
     #policy extraction
     begin = clock()
-    state = (1, 4, 6)
-    trajectory = [state]
     actionMatrix0 = example.policy_matrix()
     optPolicyMatrix = example.policy_iteration(actionMatrix0)
     valuePiStar = example.policy_evaluation(optPolicyMatrix)
-    value = valuePiStar[1][4][6]
-    trajectory_value = [value]
-    while state not in possible_goal_states:
-        prev_value = value
-        action = optPolicyMatrix[state]
-        transition = example.transition_function(.25, state, action)
-        state = tuple(transition)
-        trajectory.append(state)
-        x = state[0]
-        y = state[1]
-        h = state[2]
-        value = valuePiStar[x][y][h]
-        trajectory_value.append(value)
-        if prev_value == value:
+    value0 = valuePiStar[state0[0]][state0[1]][state0[2]]
+    trajectory_value = [value0]
+    act = []
+    while state0 not in possible_goal_states:
+        action = optPolicyMatrix[state0]
+        act.append(action)
+        prev_value = value0
+        transition = example.transition_function(Pe0, state0, action)
+        state0 = tuple(transition)
+        trajectory.append(state0)
+        x = state0[0]
+        y = state0[1]
+        h = state0[2]
+        value0 = valuePiStar[x][y][h]
+        trajectory_value.append(value0)
+        if prev_value == value0:
             break
     print trajectory
     print trajectory_value
-    print valuePiStar[3][3][6]
-    print valuePiStar[3][3][7]
+    print act
     end = clock()
     print " policy iteration timer", end - begin
 
-    # value iteration
+    #value iteration
     # begin = clock()
-    # state = (1, 4, 6)
-    # trajectory = [state]
-    # optPolicyMatrix = example.value_iteration()
-    # valuePiStar = example.policy_evaluation(optPolicyMatrix)
-    # value = valuePiStar[1][4][6]
-    # trajectory_value = [value]
+    # optPolicyMatrix, valuePiStar = example.value_iteration()
+    # value0 = valuePiStar[state0[0]][state0[1]][state0[2]]
+    # trajectory_value = [value0]
     # act = []
-    # while state not in possible_goal_states:
-    #     action = optPolicyMatrix[state]
+    # while state0 not in possible_goal_states:
+    #     action = optPolicyMatrix[state0]
     #     act.append(action)
-    #     prev_value = value
-    #     transition = example.transition_function(.1, state, action)
-    #     state = tuple(transition)
-    #     trajectory.append(state)
-    #     x = state[0]
-    #     y = state[1]
-    #     h = state[2]
-    #     value = valuePiStar[x][y][h]
-    #     trajectory_value.append(value)
-    #     if prev_value == value:
+    #     prev_value = value0
+    #     transition = example.transition_function(Pe0, state0, action)
+    #     state0 = tuple(transition)
+    #     trajectory.append(state0)
+    #     x = state0[0]
+    #     y = state0[1]
+    #     h = state0[2]
+    #     value0 = valuePiStar[x][y][h]
+    #     trajectory_value.append(value0)
+    #     if prev_value == value0:
     #         break
     # print trajectory
     # print act
     # print trajectory_value
     # end = clock()
     # print " value iteration timer", end - begin
-
