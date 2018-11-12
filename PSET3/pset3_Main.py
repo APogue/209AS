@@ -4,6 +4,11 @@ Extended kalman filter plotting code
 
 """
 
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
 #no noise
 #noise
 #top speed
@@ -13,14 +18,19 @@ Extended kalman filter plotting code
 #show eigenvalues
 #seed with high covariance and watch the plot converge
 
-from pset3_EKF_5state import car_simulation
-from pset3_EKF_5state import EKF
-from pset3_EKF_6state import car_simulation
-from pset3_EKF_6state import EKF
-import numpy as np
-import math
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+state_number = 'six states'
+
+if state_number == 'five states':
+    mod = __import__('pset3_EKF_5state', fromlist=['car_simulation'])
+    mod2 = __import__('pset3_EKF_5state', fromlist=['EKF'])
+else:
+    mod = __import__('pset3_EKF_6state', fromlist=['car_simulation'])
+    mod2 = __import__('pset3_EKF_6state', fromlist=['EKF'])
+
+car_sim = getattr(mod, 'car_simulation')
+EKF_sim = getattr(mod2, 'EKF')
+
+
 
 def plot_covariance_ellipse(z_hat, sigma_hat):
     w,v = np.linalg.eig(sigma_hat)
@@ -66,24 +76,30 @@ def main():
     theta_i = 0
     width = 500
     length = 1000
-    car = car_simulation(wheel_radius, input1, input2, wheel_base, time_step, sim_time, x_i, y_i, theta_i, width, length)
+    car = car_sim(wheel_radius, input1, input2, wheel_base, time_step, sim_time, x_i, y_i, theta_i, width, length)
     car_state = car.get_simulation()
     car_sensor_readout = car.get_sensor_simulation()
-    estimator = EKF(input1, input2, time_step, wheel_base, wheel_radius, sim_time, x_i, y_i, theta_i, width, length)
-    z_hat_list = np.zeros((1, 6))
+    estimator = EKF_sim(input1, input2, time_step, wheel_base, wheel_radius, sim_time, x_i, y_i, theta_i, width, length)
 
-    # State Vector [x y yaw v]'
-    xEst = np.array([[x_i, y_i, theta_i, 0, 0, 0]])
-    xTrue = xEst
-    PEst = np.eye(6)
+    if state_number == 'five states':
+        z_hat_list = np.zeros((1, 5))
+        # State Vector [x y yaw v]'
+        xEst = np.array([[x_i, y_i, theta_i, 0, 0]])
+        PEst = np.eye(5)
+    else:
+        z_hat_list = np.zeros((1, 6))
+        # State Vector [x y yaw v]'
+        xEst = np.array([[x_i, y_i, theta_i, 0, 0, 0]])
+        PEst = np.eye(6)
 
     # history
+    xTrue = xEst
     hxEst = xEst
     hxTrue = xTrue
 
-    show_animation = True
+    show_animation = False
     show_animation2 = False
-    show_animation3 = False
+    show_animation3 = True
 
     print(__file__ + " start!!")
     while k < car.loops:
