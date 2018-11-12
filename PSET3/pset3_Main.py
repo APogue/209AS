@@ -99,7 +99,7 @@ def main():
 
     show_animation = False
     show_animation2 = False
-    show_animation3 = True
+    show_animation3 = False
 
     print(__file__ + " start!!")
     while k < car.loops:
@@ -168,7 +168,7 @@ def main():
 
         plt.show()
 
-    if show_animation3:
+    elif show_animation3:
         #
         # setup figure
         # https://stackoverflow.com/questions/17895698/updating-the-x-axis-values-using-matplotlib-animation
@@ -185,23 +185,41 @@ def main():
 
         # set up list of images for animation
 
-        im1, = ax1.plot([], [], color=(0, 0, 1))
+        im1, = ax1.plot([], [], color=(0, 0, 1), label='car position')
+        im2, = ax1.plot([], [], color=(0, 1, 0), label='EKF tracking')
+        ax1.legend()
+        plt.xlabel('x (mm)')
+        plt.ylabel('y (mm)')
+        plt.title('EKF Localization')
 
         def func(n):
             im1.set_xdata(xdata[:n])
             im1.set_ydata(ydata[:n])
+            im2.set_xdata(xdata2[:n])
+            im2.set_ydata(ydata2[:n])
             lim = ax1.set_ylim(0, ydata[n+1])
             if np.amin(xdata[:n+1]) > xdata[0]:
                 lim2 = ax1.set_xlim(xdata[0]-.005, np.amax(xdata[:n+1]+.005))
             else:
                 lim2 = ax1.set_xlim(np.amin(xdata[:n+1]-.005), np.amax(xdata[:n+1]+.005))
-            return im1,
+            return im1,im2
 
-        ani1 = FuncAnimation(fig1, func, interval = 10, frames=int(car.loops), blit=False)
+        ani1 = FuncAnimation(fig1, func, interval=10, frames=int(car.loops), blit=False)
 
+        #ani1.save('firstAni.gif', writer='imagemagick')
         plt.show()
 
-
+    else:
+        fig= plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        ax.grid()
+        ax.plot(xdata, ydata, label = 'car position')
+        ax.plot(xdata2, ydata2, label = 'EKF tracking')
+        plt.xlabel('x (mm)')
+        plt.ylabel('y (mm)')
+        plt.title('EKF Localization')
+        ax.legend()
+        plt.show()
 
 if __name__ == '__main__':
     main()
