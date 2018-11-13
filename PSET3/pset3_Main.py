@@ -206,7 +206,7 @@ def main():
 
         ani1 = FuncAnimation(fig1, func, interval=10, frames=int(car.loops), blit=False)
 
-        #ani1.save('firstAni.gif', writer='imagemagick')
+        #ani1.save('Images/firstAni.gif', writer='imagemagick')
         plt.show()
 
     else:
@@ -219,6 +219,7 @@ def main():
         plt.ylabel('y (mm)')
         plt.title('EKF Localization')
         ax.legend()
+        plt.savefig('Images/plot.pdf')
         plt.show()
 
 if __name__ == '__main__':

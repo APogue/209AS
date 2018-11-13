@@ -100,7 +100,7 @@ class car_simulation(DistanceGenerator):
         self.sensor_output = np.zeros((int(self.loops), 4))
         self.dt = dt
         self.z = np.zeros((int(self.loops), 5))
-        self.v_t = ((self.r * self.phi_1) + (self.r * self.phi_2)) / 2
+        self.v_t = self.r*(self.phi_1 + self.phi_2)/2
 
     def get_simulation(self):
         # precompute the car simulation
@@ -110,11 +110,12 @@ class car_simulation(DistanceGenerator):
         theta_t_state = self.theta_i
         bias_state = 0.05
         while i < self.loops:
-            w_omega_t = np.random.normal(0, 0.0288)
-            w_v_t = np.random.normal(0, .0288)
-            omega_t_state = ((self.r*self.phi_1) - (self.r*self.phi_2))/self.L + w_omega_t
-            x_t_state = x_t_state + (self.v_t + w_v_t)*math.cos(theta_t_state + np.pi/2)*self.dt
-            y_t_state = y_t_state + (self.v_t + w_v_t)*math.sin(theta_t_state + np.pi/2)*self.dt
+            w_t_1 = np.random.normal(0, 0.3743) # it is not variance but standard deviation as second input
+            w_t_2 = np.random.normal(0, 0.3743)
+            v_t = self.v_t + self.r*(w_t_1 + w_t_2)/2
+            omega_t_state = self.r * (self.phi_1 - self.phi_2) / self.L + self.r * (w_t_1 - w_t_2) / self.L
+            x_t_state = x_t_state + v_t*math.sin(theta_t_state)*self.dt
+            y_t_state = y_t_state + v_t*math.cos(theta_t_state)*self.dt
             theta_t_state = (theta_t_state + 2 * np.pi) % (2 * np.pi) + omega_t_state*self.dt
             bias_state = bias_state
             self.z[i][:] = np.array([x_t_state, y_t_state,
@@ -129,9 +130,9 @@ class car_simulation(DistanceGenerator):
             distance_one = self.laser_output(self.z[i][0], self.z[i][1], self.z[i][2])
             distance_two = self.laser_output(self.z[i][0], self.z[i][1], self.z[i][2] + np.pi/2)
             distance_one = distance_one + np.random.normal(0, 0.002*distance_one)
-            distance_two = distance_two + np.random.normal(0, .002*distance_one)
-            theta_t_measured = self.z[i][2] + np.random.normal(0, .00122) + self.z[i][4]
-            omega_t_measured = self.z[i][3] + np.random.normal(0, .00122)
+            distance_two = distance_two + np.random.normal(0, 0.002*distance_one)
+            theta_t_measured = self.z[i][2] + np.random.normal(0, .00123*np.sqrt(i*self.dt)) + self.z[i][4]
+            omega_t_measured = self.z[i][3] + np.random.normal(0, .00123)
             self.sensor_output[i][:] = np.array([distance_two, distance_one,
                                                  theta_t_measured, omega_t_measured])
             i = i + 1
@@ -209,7 +210,7 @@ class EKF(car_simulation):
         theta_t_hat = self.z_hat[2]
         omega_t_hat = self.z_hat[3]
         bias = self.z_hat[4]
-        #print self.z_hat
+
         x_t_plus_one_bar = x_t_hat + self.v_t*math.cos(theta_t_hat + np.pi/2)*self.dt
         y_t_plus_one_bar = y_t_hat + self.v_t*math.sin(theta_t_hat + np.pi/2)*self.dt
         theta_t_plus_one_bar = (theta_t_hat + 2 * np.pi) % (2 * np.pi) + omega_t_hat*self.dt
@@ -221,7 +222,6 @@ class EKF(car_simulation):
         self.z_bar[2] = theta_t_plus_one_bar
         self.z_bar[3] = omega_t_plus_one_bar
         self.z_bar[4] = bias_plus_one_bar
-        #print self.z_bar
         return self.z_bar
 
     def time_linearization(self):
@@ -238,37 +238,29 @@ class EKF(car_simulation):
         return self.F_t, self.W_t
 
     def covariance_update(self): # good
-        sigma_t_plus_one_temp1 = np.dot(self.F_t, self.sigma_hat)
-        sigma_t_plus_one_temp2 = np.dot(sigma_t_plus_one_temp1, np.transpose(self.F_t))
-        sigma_t_plus_one_temp3 = np.dot(self.W_t, self.Q)
-        sigma_t_plus_one_temp4 = np.dot(sigma_t_plus_one_temp3, np.transpose(self.W_t))
-        self.sigma_bar = sigma_t_plus_one_temp2 + sigma_t_plus_one_temp4
-        #self.sigma_bar = .5 * self.sigma_bar + .5 * np.transpose(self.sigma_bar)
-        eigval, eigvec = np.linalg.eig(self.sigma_bar)
+        sigma_t_plus_one_temp1 = self.F_t.dot(self.sigma_hat).dot(self.F_t.transpose())
+        sigma_t_plus_one_temp2 = self.W_t.dot(self.Q).dot(self.W_t.transpose())
+        self.sigma_bar = sigma_t_plus_one_temp1 + sigma_t_plus_one_temp2
+        self.sigma_bar = .5*self.sigma_bar + .5*np.transpose(self.sigma_bar)
+        # eigval, eigvec = np.linalg.eig(self.sigma_bar)
         # print('controllability eigenvalues')
         # print(eigval)
         return self.sigma_bar
 
-    def get_observation_model(self): # good
+    def get_observation_model(self, k): # good
         x_bar = self.z_bar[0]
-        #print 'location'
-        #print x_bar
         y_bar = self.z_bar[1]
-        #print y_bar
         theta_bar = self.z_bar[2]
         omega_bar = self.z_bar[3]
         bias_bar = self.z_bar[4]
         distance_one_bar = self.laser_output(x_bar, y_bar, theta_bar)
-        #print 'distance one'
-        #print distance_one_bar
         self.landmark_0 = self.get_landmarks()
         distance_two_bar = self.laser_output(x_bar, y_bar, theta_bar + np.pi / 2)
-        #print distance_two_bar
         self.landmark_1 = self.get_landmarks()
         self.observation_model[0] = distance_two_bar + np.random.normal(0, 0.002*distance_two_bar)
         self.observation_model[1] = distance_one_bar + np.random.normal(0, 0.002*distance_one_bar)
-        self.observation_model[2] = theta_bar + bias_bar + np.random.normal(0, 0.00122)
-        self.observation_model[3] = omega_bar + np.random.normal(0, 0.00122)
+        self.observation_model[2] = theta_bar + np.random.normal(0, .00123*np.sqrt(k*self.dt)) + bias_bar
+        self.observation_model[3] = omega_bar + np.random.normal(0, .00123)
         return self.observation_model
 
     def observation_linearization(self): # good
@@ -279,53 +271,25 @@ class EKF(car_simulation):
 
 
     def kalman_gain_value(self): # good
-        inner_temp1 = np.dot(self.H_t, self.sigma_bar)
-        #print inner_temp1
-        inner_temp2 = np.dot(inner_temp1, self.H_t.transpose())
-        #print self.sigma_bar
-        inner_temp3 = inner_temp2 + self.R
-        #print np.dot(self.H_t, self.H_t.transpose())
-        inner_temp4 = np.linalg.inv(inner_temp3)
-        #print inner_temp4
-        outer_temp = np.dot(self.sigma_bar, self.H_t.transpose())
-        #print outer_temp
-        self.kalman_gain = np.dot(outer_temp, inner_temp4)
-        #print self.kalman_gain
-        #self.kalman_gain = np.zeros((5,4))
-        #self.kalman_gain[0][0], self.kalman_gain[1][1], self.kalman_gain[2][2], self.kalman_gain[3][3] = 1,1,1,1
-        #print self.kalman_gain
+        arg = self.H_t.dot(self.sigma_bar).dot(self.H_t.transpose()) + self.R
+        self.kalman_gain = self.sigma_bar.dot(self.H_t.transpose()).dot(np.linalg.inv(arg))
         return self.kalman_gain
 
+
     def error_calculation(self, sensor_read):
-        this = self.get_observation_model()
         self.error = sensor_read - self.observation_model
-        #print sensor_read[2]
-        #print self.observation_model[2]
         self.error[2] = self.error[2]%(2*np.pi)
         if self.error[2] > np.pi:
             self.error[2] -= 2*np.pi
-        #print self.error
-        #self.error[2] = 0
-        #print self.kalman_gain*self.error
         return self.error
         
     def conditional_mean(self): # good last resort change the model to something linear
-        temp_product = np.dot(self.kalman_gain, self.error)
-        # print(self.error)
-        self.z_hat = self.z_bar + temp_product
-        #print self.this
-        #print self.z_bar
-        #print self.kalman_gain
-        #print self.z_hat
-        #self.z_hat[2:4] = 0
-        #print self.z_hat
+        self.z_hat = self.z_bar + self.kalman_gain.dot(self.error)
         return self.z_hat
 
     def observation_update_covariance(self): # good
-        inner_product1 = np.dot(self.kalman_gain, self.H_t)
-        inner_product2 = np.dot(inner_product1, self.sigma_bar)
-        self.sigma_hat = self.sigma_bar - inner_product2
-        #self.sigma_hat = .5 * self.sigma_bar + .5 * np.transpose(self.sigma_hat)
+        inner_product = self.kalman_gain.dot(self.H_t)
+        self.sigma_hat = (np.eye(6)-inner_product).dot(self.sigma_bar)
         eigval, eigvec = np.linalg.eig(self.sigma_hat)
         print('observability eigenvalues')
         print(eigval)
