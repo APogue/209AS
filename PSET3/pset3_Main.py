@@ -99,7 +99,7 @@ def main():
 
     show_animation = False
     show_animation2 = False
-    show_animation3 = False
+    show_animation3 = True
 
     print(__file__ + " start!!")
     while k < car.loops:
@@ -107,7 +107,7 @@ def main():
         z_bar = estimator.time_propagation_update()
         F_t, W_t = estimator.time_linearization()
         sigma_bar = estimator.covariance_update()
-        h_z = estimator.get_observation_model()
+        h_z = estimator.get_observation_model(k)
         H_t = estimator.observation_linearization()
         k_gain = estimator.kalman_gain_value()
         error = estimator.error_calculation(car_sensor_readout[k])
@@ -198,10 +198,8 @@ def main():
             im2.set_xdata(xdata2[:n])
             im2.set_ydata(ydata2[:n])
             lim = ax1.set_ylim(0, ydata[n+1])
-            if np.amin(xdata[:n+1]) > xdata[0]:
-                lim2 = ax1.set_xlim(xdata[0]-.005, np.amax(xdata[:n+1]+.005))
-            else:
-                lim2 = ax1.set_xlim(np.amin(xdata[:n+1]-.005), np.amax(xdata[:n+1]+.005))
+            x = np.concatenate((xdata[:n+1], xdata2[:n+1]), axis=0)
+            lim2 = ax1.set_xlim(np.amin(x-.005), np.amax(x+.005))
             return im1,im2
 
         ani1 = FuncAnimation(fig1, func, interval=10, frames=int(car.loops), blit=False)
