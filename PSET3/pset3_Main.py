@@ -18,7 +18,7 @@ from matplotlib.animation import FuncAnimation
 #show eigenvalues
 #seed with high covariance and watch the plot converge
 
-state_number = 'six states'
+state_number = 'five states'
 
 if state_number == 'five states':
     mod = __import__('pset3_EKF_5state', fromlist=['car_simulation'])
@@ -99,7 +99,7 @@ def main():
 
     show_animation = False
     show_animation2 = False
-    show_animation3 = True
+    show_animation3 = False
 
     print(__file__ + " start!!")
     while k < car.loops:

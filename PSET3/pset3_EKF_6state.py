@@ -128,8 +128,8 @@ class car_simulation(DistanceGenerator):
         while i < self.loops:
             distance_one = self.laser_output(self.z[i][0], self.z[i][1], self.z[i][3])
             distance_two = self.laser_output(self.z[i][0], self.z[i][1], self.z[i][3] + np.pi/2)
-            distance_one = distance_one + np.random.normal(0, distance_one*.002)
-            distance_two = distance_two + np.random.normal(0, distance_two*.002)
+            distance_one = distance_one + np.random.normal(0, distance_one*.015)
+            distance_two = distance_two + np.random.normal(0, distance_two*.015)
             w_t_random_walk = np.random.normal(0, .00123*np.sqrt(i*self.dt))
             theta_t_measured = self.z[i][3] + (w_t_random_walk + 2 * np.pi) % (2 * np.pi) + self.z[i][5]
             omega_t_measured = self.z[i][4] + np.random.normal(0, .00123)
@@ -172,9 +172,9 @@ def find_H_t(H_t,observation,z_bar,landmark_values): # good
 class EKF(car_simulation):
     c1 = 1e2  # trust the measurement over the model
     c2 = 1e2
-    c3 = 1e3
-    c4 = 1e3
-    c5 = 1e3
+    c3 = 1e4
+    c4 = 1e4
+    c5 = 1e4
     c6 = .01
 
     def __init__(self, phi_1, phi_2, dt, L, r, total_time, x, y, theta, width, length):
@@ -261,8 +261,8 @@ class EKF(car_simulation):
         distance_two_bar = self.laser_output(x_bar, y_bar, theta_bar + np.pi / 2)
         self.landmark_1 = self.get_landmarks()
         w_t_random_walk = np.random.normal(0, .00123*np.sqrt(k*self.dt))
-        self.observation_model[0] = distance_one_bar + np.random.normal(0, .002*distance_one_bar)
-        self.observation_model[1] = distance_two_bar + np.random.normal(0, .002*distance_two_bar)
+        self.observation_model[0] = distance_one_bar + np.random.normal(0, .015*distance_one_bar)
+        self.observation_model[1] = distance_two_bar + np.random.normal(0, .015*distance_two_bar)
         self.observation_model[2] = theta_bar + (w_t_random_walk + 2 * np.pi) % (2 * np.pi) + bias_bar
         self.observation_model[3] = omega_bar + np.random.normal(0, .00123)
         return self.observation_model
