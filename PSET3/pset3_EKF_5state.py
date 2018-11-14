@@ -134,7 +134,7 @@ class car_simulation(DistanceGenerator):
             distance_one = distance_one + np.random.normal(0, 0.002*distance_one)
             distance_two = distance_two + np.random.normal(0, 0.002*distance_one)
             w_t_random_walk = np.random.normal(0, .00123 * np.sqrt(i * self.dt))
-            theta_t_measured = theta_t_measured + omega_t_measured*self.dt + (w_t_random_walk + 2 * np.pi) % (2 * np.pi)
+            theta_t_measured = theta_t_measured + omega_t_measured*self.dt
             omega_t_measured = self.z[i][3] + np.random.normal(0, .00123) + self.z[i][4]
             self.sensor_output[i][:] = np.array([distance_two, distance_one,
                                                  theta_t_measured, omega_t_measured])
@@ -174,12 +174,12 @@ def find_H_t(H_t,observation,z_bar,landmark_values): # good
 
 
 class EKF(car_simulation):
-    c1 = 1e2 # trust the measurement over the model
-    c2 = 1e2
-    c3 = 1e4
-    c4 = 1e4
-    c5 = 1e4
-    c6 = 1e2
+    c1 = 10 # trust the measurement over the model
+    c2 = 10
+    c3 = 100
+    c4 = 500
+    c5 = 100
+    c6 = 10
 
     def __init__(self, phi_1, phi_2, dt, L, r, total_time, x, y, theta, width, length):
         super(EKF, self).__init__(r, phi_1, phi_2, L, dt, total_time, x, y, theta, width, length)
@@ -260,11 +260,10 @@ class EKF(car_simulation):
         self.landmark_0 = self.get_landmarks()
         distance_two_bar = self.laser_output(x_bar, y_bar, theta_bar + np.pi / 2)
         self.landmark_1 = self.get_landmarks()
-        w_t_random_walk = np.random.normal(0, .00123 * np.sqrt(k * self.dt))
-        self.observation_model[0] = distance_two_bar + np.random.normal(0, 0.002*distance_two_bar)
-        self.observation_model[1] = distance_one_bar + np.random.normal(0, 0.002*distance_one_bar)
-        self.observation_model[2] = theta_bar + omega_bar*self.dt + (w_t_random_walk + 2 * np.pi) % (2 * np.pi)
-        self.observation_model[3] = omega_bar + np.random.normal(0, .00123) + bias_bar
+        self.observation_model[0] = distance_two_bar
+        self.observation_model[1] = distance_one_bar
+        self.observation_model[2] = theta_bar + omega_bar*self.dt
+        self.observation_model[3] = omega_bar + bias_bar
         return self.observation_model
 
     def observation_linearization(self): # good
