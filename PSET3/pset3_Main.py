@@ -11,12 +11,16 @@ from matplotlib.animation import FuncAnimation
 
 #no noise
 #noise
-#top speed
 #circle
 #straight
 #change R and Q
 #show eigenvalues
 #seed with high covariance and watch the plot converge
+# in the 6 state case, when you rely too much on the model it fucks up, because you are estimating velocity
+# you can make it better by modeling the slip
+# an option is to sample the state at a higher rate (zoh between samples) because the slip changes every time step, and is amplified it can't catch up to the error
+# use an unscented filter
+# use accelerometer data for higher order integration
 
 state_number = 'five states'
 
@@ -65,17 +69,20 @@ def plot_covariance_ellipse(z_hat, sigma_hat):
 
 def main():
     k = 0
-    input1 = 6
-    input2 = 6
-    sim_time = 6 # the car travels at 20 mm per second
+    input1 = 1.5
+    input2 = 4
+    sim_time = 30 # the car travels at 20 mm per second
+    # input1 = 6
+    # input2 = 6
+    # sim_time = 6 # the car travels at 20 mm per second
     wheel_radius = 20
     wheel_base = 85
-    time_step = .01
-    x_i = 300
-    y_i = 0
-    theta_i = 0
+    time_step = .001
+    x_i = 200
+    y_i = 600
+    theta_i = np.pi
     width = 500
-    length = 1000
+    length = 750
     car = car_sim(wheel_radius, input1, input2, wheel_base, time_step, sim_time, x_i, y_i, theta_i, width, length)
     car_state = car.get_simulation()
     car_sensor_readout = car.get_sensor_simulation()
@@ -138,6 +145,18 @@ def main():
 
     xdata, ydata = hxTrue[:, 0].flatten(), hxTrue[:, 1].flatten()
     xdata2, ydata2 = hxEst[:, 0].flatten(), hxEst[:, 1].flatten()
+    errorx = xdata - xdata2
+    errory = ydata - ydata2
+    max_errorx = np.amax(errorx)
+    max_errory = np.amax(errory)
+    ave_errorx = np.average(errorx)
+    ave_errory = np.average(errory)
+    rmsdx = np.std(max_errorx, dtype = np.float32)
+    rmsdy = np.std(max_errory, dtype = np.float32)
+    print(ave_errorx, ave_errory)
+    print(max_errorx, max_errory)
+    print(rmsdx, rmsdy)
+
 
     if show_animation2:
 
@@ -147,18 +166,19 @@ def main():
         ln2, = ax.plot([], [], '-r', animated=True)
 
         def init():
-            ax.set_xlim(200, 400)
-            ax.set_ylim(0, 1000)
+            ax.set_xlim(250, 350)
+            ax.set_ylim(280, 320)
             return ln, ln2,
 
         def update(i):
             x = xdata[:i]
             y = ydata[:i]
+            print(ydata)
             x2 = xdata2[:i]
             y2 = ydata2[:i]
             ln.set_data(x, y)
             ln2.set_data(x2, y2)
-            ax.set_ylim(0, hxTrue[i][0])
+            #ax.set_ylim(0, hxTrue[i][0])
             return ln, ln2,
         #
         ani = FuncAnimation(fig, update, interval=10, frames= int(car.loops) + 1,
@@ -174,6 +194,7 @@ def main():
         # https://stackoverflow.com/questions/17895698/updating-the-x-axis-values-using-matplotlib-animation
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(1,1,1)
+        # ax1.square()
         ax1.grid()
         # set up viewing window (in this case the 25 most recent values)
         repeat_length = (np.shape(hxTrue)[0] + 1) / 100
@@ -217,14 +238,26 @@ def main():
         plt.ylabel('y (mm)')
         plt.title('EKF Localization')
         ax.legend()
-        plt.savefig('Images/plot.pdf')
+        plt.savefig('Images/pdf.pdf')
         plt.show()
 
 if __name__ == '__main__':
     main()
 
+    #
+    # c1 = .00001 # this is for reduce noise factor 20
+    # c2 = .00001
+    # c3 = 1
+    # c4 = 1
+    # c5 = 1
+    # c6 = 0
 
-
+    # c1 = .015 # this is for system with all the noise
+    # c2 = .015
+    # c3 = 100
+    # c4 = 1000
+    # c5 = 3
+    # c6 = .001
 
 
 
