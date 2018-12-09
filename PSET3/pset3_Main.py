@@ -77,7 +77,7 @@ def main():
     # sim_time = 6 # the car travels at 20 mm per second
     wheel_radius = 20
     wheel_base = 85
-    time_step = .001
+    time_step = .01
     x_i = 200
     y_i = 600
     theta_i = np.pi
@@ -145,17 +145,41 @@ def main():
 
     xdata, ydata = hxTrue[:, 0].flatten(), hxTrue[:, 1].flatten()
     xdata2, ydata2 = hxEst[:, 0].flatten(), hxEst[:, 1].flatten()
-    errorx = xdata - xdata2
-    errory = ydata - ydata2
-    max_errorx = np.amax(errorx)
-    max_errory = np.amax(errory)
-    ave_errorx = np.average(errorx)
-    ave_errory = np.average(errory)
-    rmsdx = np.std(max_errorx, dtype = np.float32)
-    rmsdy = np.std(max_errory, dtype = np.float32)
-    print(ave_errorx, ave_errory)
-    print(max_errorx, max_errory)
-    print(rmsdx, rmsdy)
+
+    data = hxTrue
+    data2 = hxEst
+    error = np.absolute(data-data2)
+    for k, i in np.ndenumerate(error[:, 2]):
+        error[k, 2] = i % (2*np.pi)
+        if i > np.pi:
+            i -= 2 * np.pi
+            error[k, 2] = i
+    max_error = np.amax(error, axis = 0)
+    ave_error = np.average(error, axis = 0)
+    rmsd = np.std(error, axis = 0)
+    Q = estimator.Q
+    R = estimator.R
+    vel = estimator.r*(input1 + input2)/2
+    angVel = estimator.r*(input1 - input2)/estimator.L
+
+    print('max error')
+    print(max_error)
+
+    print('ave error')
+    print(ave_error)
+
+    print('rmse')
+    print(rmsd)
+
+    print('Q')
+    print(Q)
+    print('R')
+    print(R)
+
+    print('x, y, v, theta, w')
+    print(np.array([x_i, y_i, vel, theta_i, angVel]))
+
+
 
 
     if show_animation2:
@@ -166,8 +190,8 @@ def main():
         ln2, = ax.plot([], [], '-r', animated=True)
 
         def init():
-            ax.set_xlim(250, 350)
-            ax.set_ylim(280, 320)
+            ax.set_xlim(0, 200)
+            ax.set_ylim(500, 700)
             return ln, ln2,
 
         def update(i):
@@ -225,7 +249,7 @@ def main():
 
         ani1 = FuncAnimation(fig1, func, interval=10, frames=int(car.loops), blit=False)
 
-        #ani1.save('Images/firstAni.gif', writer='imagemagick')
+        ani1.save('Images/firstAni.gif', writer='imagemagick')
         plt.show()
 
     else:
@@ -238,7 +262,7 @@ def main():
         plt.ylabel('y (mm)')
         plt.title('EKF Localization')
         ax.legend()
-        plt.savefig('Images/pdf.pdf')
+        plt.savefig('Images/NoNoiseStraightLine.pdf')
         plt.show()
 
 if __name__ == '__main__':

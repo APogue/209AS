@@ -111,8 +111,9 @@ class car_simulation(DistanceGenerator):
         theta_t_state = self.theta_i
         bias_state = self.c*0.005
         while i < self.loops:
-            w_t_1 = np.random.normal(0, 0.3743) # it is not variance but standard deviation as second input
-            w_t_2 = np.random.normal(0, 0.3743)
+            if i%1 ==0:
+                w_t_1 = np.random.normal(0, 0.3743) # it is not variance but standard deviation as second input
+                w_t_2 = np.random.normal(0, 0.3743)
             v_t = self.v_t + self.c*self.r*(w_t_1 + w_t_2)/2
             omega_t_state = self.r * (self.phi_1 - self.phi_2) / self.L + self.c*self.r * (w_t_1 - w_t_2) / (self.L)
             x_t_state = x_t_state + v_t*math.sin(-theta_t_state)*self.dt
@@ -174,12 +175,25 @@ def find_H_t(H_t,observation,z_bar,landmark_values, dt): # good
 
 
 class EKF(car_simulation):
-    c1 = .015 # trust the measurement over the model
-    c2 = .015
-    c3 = 100
-    c4 = 1000
+    # c1 = .01 # this is for system with all the noise
+    # c2 = .01
+    # c3 = 1000
+    # c4 = 1000
+    # c5 = 3000
+    # c6 = .001
+    # c1 = .015 # this is for system with all the noise
+    # c2 = .015
+    # c3 = 100
+    # c4 = 1000
+    # c5 = 3
+    # c6 = .001
+    c1 = .1 # this is for system with all the noise
+    c2 = .1
+    c3 = 1
+    c4 = 1
     c5 = 3
     c6 = .001
+
     def __init__(self, phi_1, phi_2, dt, L, r, total_time, x, y, theta, width, length):
         super(EKF, self).__init__(r, phi_1, phi_2, L, dt, total_time, x, y, theta, width, length)
         self.z_hat = np.zeros(5)
