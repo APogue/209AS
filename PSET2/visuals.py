@@ -367,35 +367,3 @@ class gridWorld(object):
         fig.savefig(filename)
 
 
-if __name__ == '__main__':
-    # TODO: put in how to run a simulation
-    import numpy as np
-    from common import state
-
-    # make dummy states
-    start_state = state(1,4,3)
-    second_state = state(2,4,2)
-    third_state = state(3,4,1)
-    possible_goal_states = [state(3,4,11), state(3,4,0), state(3,4,1)]
-
-    # make dummy rewards matrix
-    REWARD_MATRIX = np.zeros((6,6))
-    REWARD_MATRIX[:,0] = -100
-    REWARD_MATRIX[:,-1] = -100
-    REWARD_MATRIX[0,:] = -100
-    REWARD_MATRIX[-1,:] = -100
-    REWARD_MATRIX[2:5,2] = -10
-    REWARD_MATRIX[2:5,4] = -10
-    REWARD_MATRIX[4,3] = 1
-
-    # create grid world object
-    grid_world = gridWorld('6x6 grid', REWARD_MATRIX, possible_goal_states)
-
-    # run through a quick simulation of using the grid world
-    # Note: updateState should be called to initialize as startState() is now obsolete
-    grid_world.updateState(start_state)
-    grid_world.updateState(second_state)
-    grid_world.updateState(third_state)
-    grid_world.plotTrajectoryGradient()
-
-    raw_input('Press Enter when finished')
