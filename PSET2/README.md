@@ -25,15 +25,15 @@ Green square reward: 100
 
 <object data="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals_allllll.pdf" type="application/pdf" width="700px" height="700px">
     <embed src="http://yoursite.com/the.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="http://yoursite.com/the.pdf">Download PDF</a>.</p>
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals_allllll.pdf">Download PDF</a>.</p>
     </embed>
 </object>
 
-Green square reward: 250, only rewarded in this case if agent heading is 6 o'clock
+Green square reward: 250, only rewarded if agent heading is 6 o'clock
 
 <object data="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals.pdf" type="application/pdf" width="700px" height="700px">
     <embed src="http://yoursite.com/the.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="http://yoursite.com/the.pdf">Download PDF</a>.</p>
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals.pdf">Download PDF</a>.</p>
     </embed>
 </object>
 
