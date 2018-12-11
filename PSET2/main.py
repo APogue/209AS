@@ -26,7 +26,7 @@ REWARD_MATRIX[0, :] = -100
 REWARD_MATRIX[-1, :] = -100
 REWARD_MATRIX[2:5, 2] = -10
 REWARD_MATRIX[2:5, 4] = -10
-REWARD_MATRIX[4, 3] = 1
+REWARD_MATRIX[4, 3] = 100
 
 # create grid world object
 grid_world = gridWorld('6x6 grid', REWARD_MATRIX, possible_goal_states)
@@ -86,8 +86,8 @@ elif case == 'policy iteration':
         if prev_value == value:
             break
     grid_world.plotTrajectoryGradient()
-    grid_world.saveFigure('trajectory', 'PolicyOptimalTrajectoryGoals', '.pdf')
-    grid_world.saveFigure('value', 'PolicyOptimalSelectGoals', '.pdf')
+    grid_world.saveFigure('trajectory', 'Policy Iteration Trajectory', '.pdf')
+    grid_world.saveFigure('value', 'Policy Iteration Value', '.pdf')
     print trajectory
     print trajectory_value
 
@@ -116,8 +116,8 @@ else:
         if prev_value == value:
             break
     grid_world.plotTrajectoryGradient()
-    grid_world.saveFigure('trajectory', 'ValueIterationTrajectoryGoals', '.pdf')
-    grid_world.saveFigure('value', 'ValueIterationGoals', '.pdf')
+    grid_world.saveFigure('trajectory', 'Value Iteration Trajectory', '.pdf')
+    grid_world.saveFigure('value', 'Value Iteration Value', '.pdf')
     print trajectory
     print trajectory_value
 
