@@ -64,7 +64,7 @@ class gridWorlds:
             elif h[0] == 4:
                 self.reward = -10
             elif tuple(h) in goal_states:
-                self.reward = 10
+                self.reward = 100
             else:
                 self.reward = 0
         else:
