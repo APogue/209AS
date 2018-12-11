@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# depending on the python distribution release this might error
 '''Module containing all graphical objects and supporting functions.'''
 
 __author__ = 'Colin Togashi'

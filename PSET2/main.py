@@ -8,6 +8,9 @@ from time import clock
 # Pe is the probability for error
 Pe = .1
 
+# to only have the heading point downwards in the goal state, input 'not all'
+# this will not work with the initial policy, I didn't design it with that capability
+
 example = gridWorlds(6, 6, 12, Pe, 'all')
 
 possible_goal_states = example.goal('all')
@@ -78,12 +81,13 @@ while state not in possible_goal_states:
     if prev_value == value:
         break
 grid_world.plotTrajectoryGradient()
-grid_world.saveFigure('trajectory', 'PolicyOptimalSelectGoals2', '.pdf')
-grid_world.saveFigure('value', 'PolicyOptimalSelectGoals2', '.pdf')
+grid_world.saveFigure('trajectory', 'PolicyOptimalTrajectoryGoals', '.pdf')
+grid_world.saveFigure('value', 'PolicyOptimalSelectGoals', '.pdf')
 print trajectory
 print trajectory_value
 
 # generate and plot a trajectory, value iteration
+# depending on the python interpreter release this might error
 state = (1, 4, 6)
 trajectory = [state]
 optPolicyMatrix = example.value_iteration()
@@ -108,19 +112,9 @@ while state not in possible_goal_states:
     if prev_value == value:
         break
 grid_world.plotTrajectoryGradient()
-grid_world.saveFigure('trajectory', 'ValueIterationrajectoryGoals', '.pdf')
-grid_world.saveFigure('value', 'ValueIterationValuePeGoals', '.pdf')
+grid_world.saveFigure('trajectory', 'ValueIterationTrajectoryGoals', '.pdf')
+grid_world.saveFigure('value', 'ValueIterationGoals', '.pdf')
 print trajectory
 print trajectory_value
-
-
-
-
-
-
-
-
-
-
 
 raw_input('Press Enter when finished')
