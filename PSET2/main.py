@@ -87,11 +87,9 @@ print trajectory
 print trajectory_value
 
 # generate and plot a trajectory, value iteration
-# depending on the python interpreter release this might error
 state = (1, 4, 6)
 trajectory = [state]
-optPolicyMatrix = example.value_iteration()
-valuePiStar = example.policy_evaluation(optPolicyMatrix)
+optPolicyMatrix, valuePiStar = example.value_iteration()
 value = valuePiStar[1][4][6]
 trajectory_value = [value]
 grid_world.updateState(state)
