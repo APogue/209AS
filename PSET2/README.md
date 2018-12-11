@@ -23,26 +23,26 @@ Designed to get to the green block in a minimum number of moves, without regard 
 ### Policy Iteration 
 Green square reward: 100 
 
-<object data="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals_allllll.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals_allllll.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals_allllll.pdf">Download PDF</a>.</p>
+<object data="https://github.com/APogue/209AS/blob/master/PSET2/images/Policy%20Iteration%20Trajectoryall.pdf" type="application/pdf" width="700px" height="700px">
+    <embed src="https://github.com/APogue/209AS/blob/master/PSET2/images/Policy%20Iteration%20Trajectoryall.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/Policy%20Iteration%20Trajectoryall.pdf">Download PDF</a>.</p>
     </embed>
 </object>
 
 Green square reward: 250, only rewarded if agent heading is 6 o'clock
 
-<object data="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/PolicyOptimalTrajectoryGoals.pdf">Download PDF</a>.</p>
+<object data="https://github.com/APogue/209AS/blob/master/PSET2/images/Policy%20Iteration%20Trajectory.pdf" width="700px" height="700px">
+    <embed src="https://github.com/APogue/209AS/blob/master/PSET2/images/Policy%20Iteration%20Trajectory.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/Policy%20Iteration%20Trajectory.pdf">Download PDF</a>.</p>
     </embed>
 </object>
 
 ### Value Iteration
 Green square reward: 350, only rewarded if agent heading is 6 o'clock
 
-<object data="https://github.com/APogue/209AS/blob/master/PSET2/images/ValueIterationTrajectoryGoalsblaaaa.pdf" type="application/pdf" width="700px" height="700px">
-    <embed src="https://github.com/APogue/209AS/blob/master/PSET2/images/ValueIterationTrajectoryGoalsblaaaa.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/ValueIterationTrajectoryGoalsblaaaa.pdf">Download PDF</a>.</p>
+<object data="https://github.com/APogue/209AS/blob/master/PSET2/images/Value%20Iteration%20Trajectory.pdf" type="application/pdf" width="700px" height="700px">
+    <embed src="https://github.com/APogue/209AS/blob/master/PSET2/images/Value%20Iteration%20Trajectory.pdf">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/Value%20Iteration%20Trajectory.pdf">Download PDF</a>.</p>
     </embed>
 </object>
 
