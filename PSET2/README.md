@@ -7,7 +7,7 @@ MDP value iteration and policy iteration to get to a goal state in Gridworld. Th
 * Green square: varying positive reward
 #### Other parameters
 * States: 6x6 grid, 12 heading angles
-* Actions: None, forwards, backwards, forwards left, forwards right, backwards left, backwards right
+* Actions: none, forwards, backwards, forwards left, forwards right, backwards left, backwards right
 * Discount factor: .9
 * Error probability: .25
 
