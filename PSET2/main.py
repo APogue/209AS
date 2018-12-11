@@ -5,7 +5,7 @@ from time import clock
 
 '''Creates trajectories and plots, also determines values for a trajectory'''
 
-example = gridWorlds(6, 6, 12)
+example = gridWorlds(6, 6, 12, .25, 'all')
 
 possible_goal_states = example.goal('all')
 
@@ -31,7 +31,6 @@ value = valuePi0[1][4][6]
 trajectory_value = [value]
 grid_world.updateState(state)
 grid_world.updateValue(value)
-while state not in possible_goal_states:
     action = actionMatrix[state]
     transition = example.transition_function(0, state, action)
     state = tuple(transition)
