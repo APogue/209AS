@@ -34,30 +34,33 @@ class parkingLot(object):
         self.TRAJECTORY_END_COLOR = np.array([229, 9, 222])/255.0
 
         # constant for defining delay between frames
-        self.PAUSE_DELAY = 0.05
+        self.PAUSE_DELAY = 0.005
 
         # determines cap on simulation states
         self.MAX_STATE_NUMBER = 30
 
         # constants for defining heading arrow properties
-        self.ARROW_LENGTH = 0.1
-        self.ARROW_WIDTH = 0.05
+        self.ARROW_LENGTH = .5
+        self.ARROW_WIDTH = .25
 
         # assign x and y ticks on the grid
-        x_axis_size = int(lot_matrix.shape[0]/10)
-        y_axis_size = int(lot_matrix.shape[1]/10)
+        x_axis_size = int(lot_matrix.shape[0])
+        y_axis_size = int(lot_matrix.shape[1])
         xticklabels = range(0, x_axis_size) # could be text
         yticklabels = range(0, y_axis_size) # could be text   
 
         # create a color map to match problem statement
         # Note: currently only supports 4 reward values. Move to a transition color map for more.
-        cmap = mpl.colors.ListedColormap(['yellow', 'white'])
-        cmap.set_over('green')
-        cmap.set_under('red')
+        cmap = mpl.colors.ListedColormap(['white'])
+        cmap.set_over('white')
+        cmap.set_under('white')
 
         # create discrete bounds to divide the values
-        # bounds = np.unique(lot_matrix)[:-1] + 0.5
-        # norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        bounds = [0 + 0.5, 5-.5]
+        print(lot_matrix.shape)
+        print(bounds)
+        norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        print(norm)
 
         # needed to automatically update plot
         plt.ion()
@@ -65,7 +68,7 @@ class parkingLot(object):
         # plot out rewards
         fig, ax = plt.subplots()    
         c = ax.pcolor(lot_matrix, edgecolors='k', linestyle= 'dashed',
-                         linewidths=0.2, cmap=cmap, norm=norm)
+                         linewidths=0.2, cmap=cmap, norm = norm)
 
         # put the major ticks at the middle of each cell
         ax.set_yticks(np.arange(lot_matrix.shape[0]) + 0.5, minor=False)
@@ -93,7 +96,7 @@ class parkingLot(object):
         goal_state = next(iter(possible_goal_states))
 
         # plot a star at the goal state x, y
-        plt.plot(goal_state.x+0.5, goal_state.y+0.5, marker='*', color='k', markersize=10)
+        plt.plot(goal_state[0]+0.5, goal_state[1]+0.5, marker='*', color='k', markersize=10)
         
         # save the figure, axes, and possible goal states for use in other methods
         self.fig = fig
@@ -160,14 +163,14 @@ class parkingLot(object):
         plt.figure(self.fig.number)
 
         # add points of the trajectory
-        self.trajectory_x.append(s.x+0.5)
-        self.trajectory_y.append(s.y+0.5)
+        self.trajectory_x.append(s[0]+0.5)
+        self.trajectory_y.append(s[1]+0.5)
         self.trajectory.append(s)
 
         # check if the starting state has been specified already
         if self.start_marker is None:
             # plot a marker to denote the starting state
-            self.start_marker, =  plt.plot(s.x+0.5, s.y+0.5, marker='.', color='k', markersize=10)
+            self.start_marker, =  plt.plot(s[0]+0.5, s[1]+0.5, marker='.', color='k', markersize=10)
 
             # plot trajectory from the previous state to this state
             self.trajectory_line, = plt.plot(self.trajectory_x, self.trajectory_y, 'k--')    
@@ -179,12 +182,12 @@ class parkingLot(object):
             self.trajectory_line.set_data(self.trajectory_x, self.trajectory_y)
 
         # calculate the change in x and y to show heading with the arrow object
-        dx = self.ARROW_LENGTH*np.cos(s.heading)
-        dy = self.ARROW_LENGTH*np.sin(s.heading)
+        dx = 100*self.ARROW_LENGTH*np.cos(s[2])
+        dy = 100*self.ARROW_LENGTH*np.sin(s[2])
 
         # create a new arrow pointing in the correct heading
         # Note: store arrow to destroy and recreate later
-        self.state_arrow = self.ax.arrow(s.x+0.5, s.y+0.5, dx, dy, width=self.ARROW_WIDTH, edgecolor='k')
+        self.state_arrow = self.ax.arrow(s[0]+0.5, s[1]+0.5, dx, dy, width=self.ARROW_WIDTH, edgecolor='k')
 
         # pause to see the plot update
         plt.pause(self.PAUSE_DELAY)
@@ -269,11 +272,11 @@ class parkingLot(object):
             s = self.trajectory[k]
 
             # calculate the change in x and y to show heading with the arrow object
-            dx = 0.3*np.cos(s.heading)
-            dy = 0.3*np.sin(s.heading)
+            dx = 0.3*np.cos(s[2])
+            dy = 0.3*np.sin(s[2])
 
             # plot an arrow denoting part of the trajectory
-            self.trajectory_arrows.append(self.ax.arrow(s.x+0.5, s.y+0.5, dx, dy, width=self.ARROW_WIDTH, 
+            self.trajectory_arrows.append(self.ax.arrow(s[0]+0.5, s[1]+0.5, dx, dy, width=self.ARROW_WIDTH,
                 facecolor=(gradient_color_set[:,k]), edgeColor=(gradient_color_set[:,k])))
 
 

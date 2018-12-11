@@ -9,11 +9,19 @@ class parkingLot:
     def __init__(self, width, length):
         self.width = width
         self.length = length
+        self.origin = np.array([0, 0, 1])
 
     def lot_dictionary(self):
         lot_info_dict = dict(length=self.length, width=self.width)
         return lot_info_dict
 
+    def lot_plot_info(self):
+        bottom_edge_point = np.array([self.width, 0, 1])
+        top_edge_point = np.array([0, self.length, 1])
+        diagonal_edge_point = np.array([self.width, self.length, 1])
+        lot_plot_points = np.vstack((self.origin, bottom_edge_point,
+                                     top_edge_point, diagonal_edge_point)).transpose()
+        return lot_plot_points
 
 class myCar:
     # this class instantiates the car, the car will exist in its own frame C, you could also use a class attribute here which is myCar.length
@@ -52,11 +60,10 @@ class myCar:
                 bumper = np.append(bumper, bumper_point, axis=1)
             mirror_bumper = np.vstack((-1*bumper[0, :0:-1], bumper[1:,1:]))
             bumper = np.append(mirror_bumper, bumper, axis=1)
-            print(bumper)
             return bumper
         return 'car is not moving'
 
-    def homogenous_transform(self, point, angle):
+    def homogeneous_transform(self, point, angle):
         R = np.array([[np.cos(angle), -np.sin(angle)],[np.sin(angle), np.cos(angle)], [0, 0]])
         T = np.hstack((R, np.array([point]).transpose()))
         return T
@@ -65,7 +72,7 @@ class myCar:
         obs_length, obs_width = obstacle_dict['length'], obstacle_dict['width']
         T_ba = obstacle_dict['T_ba'] # Transform frame wrt frame B
         # car wrt frame A
-        T_ac = self.homogenous_transform(self.p_xy, self.heading)
+        T_ac = self.homogeneous_transform(self.p_xy, self.heading)
         # car wrt frame B (obstacle frame)
         T_bc = np.dot(T_ba, T_ac)
         # put either the front or back bumper in the B frame
@@ -109,7 +116,7 @@ class myCar:
         if self.p_xy[0] < (0 + car_diag_dist)or self.p_xy[0] > (lot_width - car_diag_dist) \
             or self.p_xy[1] < (0 + car_diag_dist) or self.p_xy[1] < (lot_length - car_diag_dist):
             # put the bumper in the A frame
-            T_ac = self.homogenous_transform(self.p_xy, self.heading)
+            T_ac = self.homogeneous_transform(self.p_xy, self.heading)
             bumper = self.car_bumper(self.vel)
             bumper_fa = np.dot(T_ac, bumper)
             copy_x = bumper_fa[0, :]
@@ -119,14 +126,14 @@ class myCar:
                 return True
         return False
 
-    def car_plot_info(self, v):
-        front_bumper = self.car_bumper(np.abs(self.v))
-        rear_bumber = self.car_bumper(-np.abs(self.v))
-        end_points = np.hstack((front_bumper[:,0], front_bumper[:,-1], rear_bumber[:,0], rear_bumber[:, -1]))
+    def car_plot_info(self):
+        front_bumper = self.car_bumper(np.abs(self.vel))
+        rear_bumber = self.car_bumper(-np.abs(self.vel))
+        end_points = np.vstack((front_bumper[:,0], front_bumper[:,-1], rear_bumber[:,0], rear_bumber[:, -1])).transpose()
         # rotate them into the frame A
-        T_ac = self.homogenous_transform(self.p_xy, self.heading)
-        plot_points = np.dot(T_ac, end_points)
-        return plot_points
+        T_ac = self.homogeneous_transform(self.p_xy, self.heading)
+        car_plot_points = np.dot(T_ac, end_points)
+        return car_plot_points
 
 class Obstacle:
     # this class instantiates the obstacles, they will exist in frames B, (not C) to Z
@@ -135,50 +142,30 @@ class Obstacle:
         self.width = width
         self.orientation = orientation # defined wrt frame A
         self.origin = p_xy
-        self.T_inv = self.homogenous_transform()
+        self.T_inv, self.T_ab = self.homogeneous_transform()
 
     def obstacle_dictionary(self):
         obstacle_info_dict = dict(origin = self.origin, orientation = self.orientation,
                                   length=self.length, width=self.width, T_ba = self.T_inv)
         return obstacle_info_dict
 
-    def homogenous_transform(self):
+    def homogeneous_transform(self):
         R = np.array([[np.cos(self.orientation), -np.sin(self.orientation)],
                       [np.sin(self.orientation), np.cos(self.orientation)], [0, 0]])
         T = np.hstack((R, np.array([self.origin]).transpose()))
-        self.T_inv = np.linalg.inv(T)
-        return self.T_inv
+        self.T_inv, self.T_ab = np.linalg.inv(T), T
+        return self.T_inv, self.T_ab
 
     def obstacle_plot_info(self):
-        bottom_edge_point = np.array([[0, self.width]])
-        top_edge_point = np.array([[self.length, 0]])
-        diagonal_edge_point = bottom_edge_point + top_edge_point
-        obstacle_points = np.hstack((np.array([self.origin]).transpose(), bottom_edge_point,
-                                     top_edge_point, diagonal_edge_point))
-        obstacle_plot_points = np.dot(self.T_ba, obstacle_points)
+        bottom_edge_point = np.array([self.width, 0, 1])
+        top_edge_point = np.array([0, self.length, 1])
+        diagonal_edge_point = np.array([self.width, self.length, 1])
+        obstacle_points = np.vstack((self.origin, bottom_edge_point,
+                                     top_edge_point, diagonal_edge_point)).transpose()
+        obstacle_plot_points = np.dot(self.T_ab, obstacle_points)
         return obstacle_plot_points
 
-class plotShapes:
 
-    def __init__(self, title, xlabel, ylabel):
-        self.title = 'title'
-        self.xlabel = 'xlabel'
-        self.ylabel = 'ylabel'
-
-    def plot_data(self, obstacle_plot_points, car_plot_points):
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        ax.grid()
-        ax.plot(xdata, ydata, label='car ')
-        ax.plot(xdata2, ydata2, label='obstacle')
-        plt.xlabel('x (mm)')
-        plt.ylabel('y (mm)')
-        plt.title('EKF Localization')
-        ax.legend()
-        return plt.show
-
-    def save_plot(self):
-        return plt.savefig('Images/Fig1.pdf')
 
 
 
@@ -190,12 +177,18 @@ if __name__ == '__main__':
     car.heading = 20*np.pi/180
     car.vel = 1
     car.ang_vel = 1
+
     obstacle = Obstacle(car.p_xy, 100, 100, 0)
     obstacle.obstacle_dictionary()
+
+    lot = parkingLot(500, 700)
+
     check = car.check_obstacle_collision(obstacle.obstacle_dictionary())
     parking_lot = parkingLot(500, 700)
     check2 = car.check_boarder_collision(parking_lot.lot_dictionary())
-    print(check, check2)
+    print(obstacle.obstacle_plot_info())
+    print(car.car_plot_info())
+    print(lot.lot_plot_info())
 
 
 
