@@ -16,7 +16,7 @@ MDP value iteration and policy iteration to get to a goal state in Gridworld. Th
 Designed to get to the green block in a minimum number of moves, without regard for reward
 <object data="https://github.com/APogue/209AS/blob/master/PSET2/images/Initial%20Policy%20Trajectoryssssssssss.pdf" type="application/pdf" width="700px" height="700px">
     <embed src="http://yoursite.com/the.pdf">
-        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="http://yoursite.com/the.pdf">Download PDF</a>.</p>
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/APogue/209AS/blob/master/PSET2/images/Initial%20Policy%20Trajectoryssssssssss.pdf">Download PDF</a>.</p>
     </embed>
 </object>
 
