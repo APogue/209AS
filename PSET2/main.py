@@ -5,11 +5,14 @@ from time import clock
 
 '''Creates trajectories and plots, also determines values for a trajectory'''
 
-example = gridWorlds(6, 6, 12, .25, 'all')
+# Pe is the probability for error
+Pe = .1
+
+example = gridWorlds(6, 6, 12, Pe, 'all')
 
 possible_goal_states = example.goal('all')
 
-# make rewards matrix
+# make reward matrix
 REWARD_MATRIX = np.zeros((6, 6))
 REWARD_MATRIX[:, 0] = -100
 REWARD_MATRIX[:, -1] = -100
@@ -33,7 +36,7 @@ grid_world.updateState(state)
 grid_world.updateValue(value)
 while state not in possible_goal_states:
     action = actionMatrix[state]
-    transition = example.transition_function(0, state, action)
+    transition = example.transition_function(Pe, state, action) # with Pe = 0, it should get there in min moves
     state = tuple(transition)
     grid_world.updateState(state)
     trajectory.append(state)
@@ -62,7 +65,7 @@ grid_world.updateValue(value)
 while state not in possible_goal_states:
     prev_value = value
     action = optPolicyMatrix[state]
-    transition = example.transition_function(.25, state, action)
+    transition = example.transition_function(Pe, state, action)
     state = tuple(transition)
     grid_world.updateState(state)
     trajectory.append(state)
@@ -92,7 +95,7 @@ grid_world.updateValue(value)
 while state not in possible_goal_states:
     prev_value = value
     action = optPolicyMatrix[state]
-    transition = example.transition_function(.25, state, action)
+    transition = example.transition_function(Pe, state, action)
     state = tuple(transition)
     grid_world.updateState(state)
     trajectory.append(state)
