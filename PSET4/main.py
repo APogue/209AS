@@ -1,8 +1,8 @@
 
 from PSET4.visuals2 import visualEnvironment
-from PSET4.pset4 import myCar
-from PSET4.pset4 import Obstacle
-from PSET4.pset4 import parkingLot
+from PSET4.collision_detection import myCar
+from PSET4.collision_detection import Obstacle
+from PSET4.collision_detection import parkingLot
 import numpy as np
 
 
