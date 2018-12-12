@@ -186,12 +186,16 @@ def main():
 
         fig, ax = plt.subplots()
         ax.grid()
-        ln, = ax.plot([], [], '-b', animated=True)
-        ln2, = ax.plot([], [], '-r', animated=True)
+        ln, = ax.plot([], [], '-b', animated=True, label = 'car position')
+        ln2, = ax.plot([], [], '-r', animated=True, label = 'EKF tracking')
+        ax.legend()
+        plt.xlabel('x (mm)')
+        plt.ylabel('y (mm)')
+        plt.title('EKF Localization')
 
         def init():
-            ax.set_xlim(0, 200)
-            ax.set_ylim(500, 700)
+            ax.set_xlim(0, 250)
+            ax.set_ylim(450, 750)
             return ln, ln2,
 
         def update(i):
@@ -205,7 +209,7 @@ def main():
             #ax.set_ylim(0, hxTrue[i][0])
             return ln, ln2,
         #
-        ani = FuncAnimation(fig, update, interval=10, frames= int(car.loops) + 1,
+        ani = FuncAnimation(fig, update, interval=1, frames= int(car.loops/1.5) + 1,
                             init_func=init, blit=True, repeat = False)
 
         ani.save('Images/firstAni.gif', writer='imagemagick')
@@ -230,14 +234,15 @@ def main():
 
         # set up list of images for animation
 
-        im1, = ax1.plot([], [], color=(0, 0, 1), label='car position')
-        im2, = ax1.plot([], [], color=(0, 1, 0), label='EKF tracking')
-        ax1.legend()
-        plt.xlabel('x (mm)')
-        plt.ylabel('y (mm)')
-        plt.title('EKF Localization')
+
 
         def func(n):
+            im1, = ax1.plot([], [], color=(0, 0, 1), label='car position')
+            im2, = ax1.plot([], [], color=(0, 1, 0), label='EKF tracking')
+            ax1.legend()
+            plt.xlabel('x (mm)')
+            plt.ylabel('y (mm)')
+            plt.title('EKF Localization')
             im1.set_xdata(xdata[:n])
             im1.set_ydata(ydata[:n])
             im2.set_xdata(xdata2[:n])
@@ -247,9 +252,9 @@ def main():
             lim2 = ax1.set_xlim(np.amin(x-.005), np.amax(x+.005))
             return im1,im2
 
-        ani1 = FuncAnimation(fig1, func, interval=10, frames=int(car.loops), blit=False)
+        ani1 = FuncAnimation(fig1, func, interval=1000, frames=int(car.loops/1000), blit=False)
 
-        ani1.save('Images/firstAni.gif', writer='imagemagick')
+        # ani1.save('Images/firstAni.gif', writer='imagemagick')
         plt.show()
 
     else:
