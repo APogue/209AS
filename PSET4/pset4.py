@@ -9,18 +9,18 @@ class parkingLot:
     def __init__(self, width, length):
         self.width = width
         self.length = length
-        self.origin = np.array([0, 0, 1])
+        self.origin = np.array([0, 0])
 
     def lot_dictionary(self):
         lot_info_dict = dict(length=self.length, width=self.width)
         return lot_info_dict
 
     def lot_plot_info(self):
-        bottom_edge_point = np.array([self.width, 0, 1])
-        top_edge_point = np.array([0, self.length, 1])
-        diagonal_edge_point = np.array([self.width, self.length, 1])
-        lot_plot_points = np.vstack((self.origin, bottom_edge_point,
-                                     top_edge_point, diagonal_edge_point)).transpose()
+        bottom_edge_point = np.array([self.width, 0])
+        top_edge_point = np.array([0, self.length])
+        diagonal_edge_point = np.array([self.width, self.length])
+        lot_plot_points = np.vstack((self.origin, top_edge_point,
+                                     diagonal_edge_point, bottom_edge_point))
         return lot_plot_points
 
 class myCar:
@@ -46,7 +46,7 @@ class myCar:
 
     def car_bumper(self, v): # wrt frame C, this assumes the car doesn't hit an object if pivoting about a wheel
         # also assumes that the car cannot slip
-        origin = np.array([[0, 0, 1]]) # the origin is wheel axle center
+        origin = np.array([[0, 0, 1]])
         if v != 0:
             n = 5
             number_spaces = self.width/n -1
@@ -70,7 +70,7 @@ class myCar:
 
     def check_obstacle_collision(self, obstacle_dict):
         obs_length, obs_width = obstacle_dict['length'], obstacle_dict['width']
-        T_ba = obstacle_dict['T_ba'] # Transform frame wrt frame B
+        T_ba = obstacle_dict['T_ba'] # Transform frame A wrt frame B
         # car wrt frame A
         T_ac = self.homogeneous_transform(self.p_xy, self.heading)
         # car wrt frame B (obstacle frame)
@@ -141,7 +141,7 @@ class Obstacle:
         self.length = length
         self.width = width
         self.orientation = orientation # defined wrt frame A
-        self.origin = p_xy
+        self.origin = p_xy # this is the origin in frame A
         self.T_inv, self.T_ab = self.homogeneous_transform()
 
     def obstacle_dictionary(self):
@@ -157,12 +157,14 @@ class Obstacle:
         return self.T_inv, self.T_ab
 
     def obstacle_plot_info(self):
+        origin = np.array([0, 0, 1]) # in the obstacles frame B, the origin is always at 0
         bottom_edge_point = np.array([self.width, 0, 1])
         top_edge_point = np.array([0, self.length, 1])
         diagonal_edge_point = np.array([self.width, self.length, 1])
-        obstacle_points = np.vstack((self.origin, bottom_edge_point,
-                                     top_edge_point, diagonal_edge_point)).transpose()
-        obstacle_plot_points = np.dot(self.T_ab, obstacle_points)
+        obstacle_points = np.vstack((origin, top_edge_point,
+                                     diagonal_edge_point, bottom_edge_point)).transpose()
+        obstacle_plot_points = np.dot(self.T_ab, obstacle_points).transpose()
+        obstacle_plot_points = obstacle_plot_points[:, :2]
         return obstacle_plot_points
 
 

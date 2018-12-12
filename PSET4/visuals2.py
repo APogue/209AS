@@ -7,20 +7,17 @@ __author__ = 'Alexie Pogue'
 # libraries
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from matplotlib.colors import ListedColormap, BoundaryNorm
-import matplotlib as mpl
+from matplotlib.patches import Polygon
 import numpy as np
-import copy
-import os
 
 # path where images are stored
 IMAGE_PATH = './images'
 
 
-class parkingLot(object):
+class visualEnvironment(object):
     '''Graphics object to animate algorithms'''
 
-    def __init__(self, title, lot_size, possible_goal_states):
+    def __init__(self, title, lot_info, possible_goal_states):
         '''Constructor
 
         Arguments:
@@ -29,7 +26,7 @@ class parkingLot(object):
             possible_goal_states - desired destination
          '''
 
-
+        self.lot_info = lot_info
         self.trajectory = 0
 
 
@@ -40,7 +37,9 @@ class parkingLot(object):
         plt.title(title)
         plt.xlabel('x')
         plt.ylabel('y')
-        plt.grid()
+        plt.gca().set_aspect('equal', adjustable='box')
+        #plt.grid()
+
 
         # turn off all the ticks marks
         ax = plt.gca()
@@ -55,7 +54,13 @@ class parkingLot(object):
         goal_state = next(iter(possible_goal_states))
 
         # plot a star at the goal state x, y
-        plt.plot(goal_state[0] + 0.5, goal_state[1] + 0.5, marker='*', color='k', markersize=10)
+        plt.plot(goal_state[0] + 0.5, goal_state[1] + 0.5, marker='*', color='k', markersize=7)
+
+        # plot the parking lot
+        parking_lot = Polygon(lot_info, fc=(1, 1, 1, 0.5), ec=(0, 0, 0, 1), lw=2)
+        ax.add_artist(parking_lot)
+
+
 
 
         # save the figure, axes, and possible goal states for use in other methods
@@ -66,8 +71,18 @@ class parkingLot(object):
         # reset the starting point
         self.start_marker = None
 
+        self.ax.set_xlim(self.lot_info[:, 0].min() - 50, self.lot_info[:, 0].max()+50)
+        self.ax.set_ylim(self.lot_info[:, 1].min() - 50, self.lot_info[:, 1].max()+50)
 
 
+    def plotObstacle(self, obstacle_info, face_color):
+        '''accepts stacked object vertices info for plotting '''
+
+        V = 0
+        for N in obstacle_info:
+            obstacle = Polygon(N, fc=face_color[V], ec=(0, 0, 0, 1), lw=2)
+            self.ax.add_artist(obstacle)
+            V += 1
 
     def plotTrajectoryGradient(self):
         '''Plots the state trajectory with gradient colors to show time progression'''
@@ -85,45 +100,8 @@ class parkingLot(object):
         lc.set_linestyle('--')
 
         self.ax.add_collection(lc)
-        self.ax.set_xlim(self.trajectory[:,0].min(), self.trajectory[:,0].max()+10)
-        self.ax.set_ylim(self.trajectory[:,1].min(), self.trajectory[:,1].max()+10)
-
-
 
         plt.show()
-
-
-
-
-
-if __name__ == '__main__':
-
-    h_count = np.arange(60) * np.pi / 180
-
-    possible_goal_states = set((150, 250, h) for h in h_count)
-
-    # Lot Matrix
-    LOT_MATRIX = np.zeros((50, 70))
-
-
-    # generate and plot a trajectory, initial policy
-
-    state_vector = np.zeros((50, 3))
-
-    state_vector[:, 0] = np.arange(101, 151)
-    state_vector[:, 1] = np.arange(201, 251)
-    state_vector[:, 2] = np.arange(50) * np.pi / 180
-
-
-    # create environment
-    car = parkingLot('Collision Stuff', lot_size, possible_goal_states)
-
-    car.trajectory = state_vector
-
-    car.plotTrajectoryGradient()
-
-
-
 
 
 
