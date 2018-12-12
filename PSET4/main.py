@@ -17,9 +17,9 @@ lot_plot_info = lot.lot_plot_info()
 # instantiate the car (length, width)
 car = myCar(80, 85)
 # car point on wheel axle
-car.p_xy = np.array([0, 0, 1])
+car.p_xy = np.array([350, 350, 1])
 # car heading angle, velocity and angular velocity
-car.heading = 20 * np.pi / 180
+car.heading = 0 * np.pi / 180
 car.vel = 1
 car.ang_vel = 1
 
@@ -55,6 +55,7 @@ visual.plotObstacle(obstacle_plot_info, face_color)
 # plot the car trajectory
 visual.trajectory = state_vector
 visual.plotTrajectoryGradient()
+visual.plotCar(car.p_xy, [car.car_plot_info()])
 
 
 # check the collision detector is working

@@ -128,11 +128,12 @@ class myCar:
 
     def car_plot_info(self):
         front_bumper = self.car_bumper(np.abs(self.vel))
-        rear_bumber = self.car_bumper(-np.abs(self.vel))
-        end_points = np.vstack((front_bumper[:,0], front_bumper[:,-1], rear_bumber[:,0], rear_bumber[:, -1])).transpose()
+        rear_bumper = self.car_bumper(-np.abs(self.vel))
+        end_points = np.vstack((rear_bumper[:,0], front_bumper[:,0], front_bumper[:,-1], rear_bumper[:, -1])).transpose()
         # rotate them into the frame A
         T_ac = self.homogeneous_transform(self.p_xy, self.heading)
-        car_plot_points = np.dot(T_ac, end_points)
+        car_plot_points = np.dot(T_ac, end_points).transpose()
+        car_plot_points = car_plot_points[:, :2]
         return car_plot_points
 
 class Obstacle:
@@ -176,7 +177,7 @@ if __name__ == '__main__':
 
     car = myCar(80, 85)
     car.p_xy = np.array([0, 0, 1])
-    car.heading = 20*np.pi/180
+    car.heading = 0*np.pi/180
     car.vel = 1
     car.ang_vel = 1
 

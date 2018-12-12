@@ -54,7 +54,7 @@ class visualEnvironment(object):
         goal_state = next(iter(possible_goal_states))
 
         # plot a star at the goal state x, y
-        plt.plot(goal_state[0] + 0.5, goal_state[1] + 0.5, marker='*', color='k', markersize=7)
+        plt.plot(goal_state[0], goal_state[1], marker='*', color='k', markersize=7)
 
         # plot the parking lot
         parking_lot = Polygon(lot_info, fc=(1, 1, 1, 0.5), ec=(0, 0, 0, 1), lw=2)
@@ -100,6 +100,14 @@ class visualEnvironment(object):
         lc.set_linestyle('--')
 
         self.ax.add_collection(lc)
+
+    def plotCar(self, p_xy, car_plot_info):
+        '''Plots car along the state trajectory'''
+
+        plt.plot(p_xy[0], p_xy[1], marker='.', color='k', markersize=7)
+        for N in car_plot_info:
+            car = Polygon(N, fc=(.5, 1, 0, 1), ec=(0, 0, 0, 1), lw=2)
+            self.ax.add_artist(car)
 
         plt.show()
 
