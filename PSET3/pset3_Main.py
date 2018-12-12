@@ -69,8 +69,8 @@ def plot_covariance_ellipse(z_hat, sigma_hat):
 
 def main():
     k = 0
-    input1 = 1.5
-    input2 = 4
+    input1 = 3
+    input2 = 6
     sim_time = 30 # the car travels at 20 mm per second
     # input1 = 6
     # input2 = 6
