@@ -110,9 +110,9 @@ class car_simulation(DistanceGenerator):
         theta_t_state = self.theta_i
         bias_state = .005
         while i < self.loops:
-            if i%1==0:
-                w_t_1 = np.random.normal(0, 0.3743) # it is not variance but standard deviation as second input
-                w_t_2 = np.random.normal(0, 0.3743)
+            if i%50==0:
+                w_t_1 = np.random.normal(0, 0.3743) /10# it is not variance but standard deviation as second input
+                w_t_2 = np.random.normal(0, 0.3743)/10
             omega_t_state = self.r*(self.phi_1 - self.phi_2)/self.L + self.r*(w_t_1 - w_t_2)/self.L
             v_t_state = self.r*(self.phi_1 + self.phi_2)/2 + self.r*(w_t_1 + w_t_2)/2
             x_t_state = x_t_state + v_t_state*math.cos(theta_t_state + np.pi/2)*self.dt
