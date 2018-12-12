@@ -69,9 +69,9 @@ def plot_covariance_ellipse(z_hat, sigma_hat):
 
 def main():
     k = 0
-    input1 = 1
-    input2 = 1
-    sim_time = 10 # the car travels at 20 mm per second
+    input1 = 1.5
+    input2 = 4
+    sim_time = 30 # the car travels at 20 mm per second
     # input1 = 6
     # input2 = 6
     # sim_time = 6 # the car travels at 20 mm per second
@@ -105,8 +105,8 @@ def main():
     hxTrue = xTrue
 
     show_animation = False
-    show_animation2 = False
-    show_animation3 = True
+    show_animation2 = True
+    show_animation3 = False
 
     print(__file__ + " start!!")
     while k < car.loops:
@@ -208,7 +208,7 @@ def main():
         ani = FuncAnimation(fig, update, interval=10, frames= int(car.loops) + 1,
                             init_func=init, blit=True, repeat = False)
 
-        #ani.save('firstAni.gif', writer='imagemagick')
+        ani.save('Images/firstAni.gif', writer='imagemagick')
 
         plt.show()
 
