@@ -107,8 +107,8 @@ def main():
     hxTrue = xTrue
 
     show_animation = False
-    show_animation2 = True
-    show_animation3 = False
+    show_animation2 = False
+    show_animation3 = True
 
     print(__file__ + " start!!")
     while k < car.loops:
@@ -134,10 +134,10 @@ def main():
                      np.array(hxTrue[:, 1]).flatten(), "-b")
             plt.plot(np.array(hxEst[:, 0]).flatten(),
                      np.array(hxEst[:, 1]).flatten(), "-r")
-            #plot_covariance_ellipse(z_hat, sigma_hat)
-            #plt.ylim(0, 700)
-            #plt.xlim(280, 320)
-            #plt.axis("equal")
+            plot_covariance_ellipse(z_hat, sigma_hat)
+            plt.ylim(0, 700)
+            plt.xlim(0, 250)
+            plt.axis("equal")
             plt.grid(True)
             plt.pause(.009)
 
@@ -214,7 +214,7 @@ def main():
         ani = FuncAnimation(fig, update, interval=1, frames= int(car.loops/2) + 1,
                             init_func=init, blit=True, repeat = False)
 
-        ani.save('Images/firstAni.gif', writer='imagemagick', fps = 30)
+        #ani.save('Images/firstAni1.gif', writer='imagemagick', fps = 30)
 
         plt.show()
 
@@ -224,6 +224,14 @@ def main():
         # https://stackoverflow.com/questions/17895698/updating-the-x-axis-values-using-matplotlib-animation
         fig1 = plt.figure()
         ax1 = fig1.add_subplot(1,1,1)
+        im1, = ax1.plot([], [], color=(0, 0, 1), label='car position')
+        im2, = ax1.plot([], [], color=(0, 1, 0), label='EKF tracking')
+        ax1.legend()
+        plt.xlabel('x (mm)')
+        plt.ylabel('y (mm)')
+        plt.title('EKF Localization')
+
+
         # ax1.square()
         ax1.grid()
         # set up viewing window (in this case the 25 most recent values)
@@ -241,22 +249,32 @@ def main():
         def func(n):
             im1, = ax1.plot([], [], color=(0, 0, 1), label='car position')
             im2, = ax1.plot([], [], color=(0, 1, 0), label='EKF tracking')
-            ax1.legend()
-            plt.xlabel('x (mm)')
-            plt.ylabel('y (mm)')
-            plt.title('EKF Localization')
-            im1.set_xdata(xdata[:n])
-            im1.set_ydata(ydata[:n])
-            im2.set_xdata(xdata2[:n])
-            im2.set_ydata(ydata2[:n])
-            lim = ax1.set_ylim(0, ydata[n+1])
+            im1.set_xdata(xdata[:n:2])
+            im1.set_ydata(ydata[:n:2])
+            im2.set_xdata(xdata2[:n:2])
+            im2.set_ydata(ydata2[:n:2])
+            lim = ax1.set_ylim(450, 750)
             x = np.concatenate((xdata[:n+1], xdata2[:n+1]), axis=0)
             lim2 = ax1.set_xlim(np.amin(x-.005), np.amax(x+.005))
             return im1,im2
 
-        ani1 = FuncAnimation(fig1, func, interval=1000, frames=int(car.loops/1000), blit=False)
 
-        # ani1.save('Images/firstAni.gif', writer='imagemagick')
+        # def func(n):
+        #     im1, = ax1.plot([], [], color=(0, 0, 1), label='car position')
+        #     im2, = ax1.plot([], [], color=(0, 1, 0), label='EKF tracking')
+        #     im1.set_xdata(xdata[:n])
+        #     im1.set_ydata(ydata[:n])
+        #     im2.set_xdata(xdata2[:n])
+        #     im2.set_ydata(ydata2[:n])
+        #     lim = ax1.set_ylim(0, ydata[n+1])
+        #     x = np.concatenate((xdata[:n+1], xdata2[:n+1]), axis=0)
+        #     lim2 = ax1.set_xlim(np.amin(x-.005), np.amax(x+.005))
+        #     return im1,im2
+
+
+        ani1 = FuncAnimation(fig1, func, interval=1, frames=int(car.loops/2), blit=False)
+
+        ani1.save('Images/firstAni1.gif', writer='imagemagick', fps = 30)
         plt.show()
 
     else:
