@@ -4,10 +4,12 @@ Extended kalman filter plotting code
 
 """
 
+
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+
 
 #no noise
 #noise
@@ -209,10 +211,10 @@ def main():
             #ax.set_ylim(0, hxTrue[i][0])
             return ln, ln2,
         #
-        ani = FuncAnimation(fig, update, interval=1, frames= int(car.loops/1.5) + 1,
+        ani = FuncAnimation(fig, update, interval=1, frames= int(car.loops/2) + 1,
                             init_func=init, blit=True, repeat = False)
 
-        ani.save('Images/firstAni.gif', writer='imagemagick')
+        ani.save('Images/firstAni.gif', writer='imagemagick', fps = 30)
 
         plt.show()
 
