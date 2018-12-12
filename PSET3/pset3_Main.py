@@ -262,7 +262,7 @@ def main():
         plt.ylabel('y (mm)')
         plt.title('EKF Localization')
         ax.legend()
-        plt.savefig('Images/NoNoiseStraightLine.pdf')
+        plt.savefig('Images/decreasenoisezohfactor50.svg')
         plt.show()
 
 if __name__ == '__main__':
