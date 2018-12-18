@@ -25,12 +25,12 @@ class parkingLot:
 
 class myCar:
     # this class instantiates the car, the car will exist in its own frame C, you could also use a class attribute here which is myCar.length
-    def __init__(self, length, width):
+    def __init__(self, length, width, heading):
         self.length = length
         self.width = width
         # wrt frame A
         self.p_xy = 0
-        self.heading = 0
+        self.heading = heading
         self.vel = 0
         self.ang_vel = 0
 
@@ -107,6 +107,8 @@ class myCar:
         if not collision_value:
             return False
         return True
+
+
 
     def check_boarder_collision(self, lot_dict):
         # max boarder in config space: in the event that the robot can rotate, just taking the worst case

@@ -89,8 +89,8 @@ class DistanceGenerator(object):
 class car_simulation(DistanceGenerator):
     def __init__(self, r, phi_1, phi_2, L, dt, total_time, x, y, theta, width, length):
         super(car_simulation, self).__init__(x, y, theta, width, length)
-        self.x_i = x
-        self.y_i = y
+        self.x_i = 250
+        self.y_i = 0
         self.theta_i = theta
         self.loops = np.round(total_time/dt, 0)
         self.r = r
@@ -111,11 +111,11 @@ class car_simulation(DistanceGenerator):
         theta_t_state = self.theta_i
         bias_state = self.c*0.005
         while i < self.loops:
-            if i%50 ==0:
-                w_t_1 = np.random.normal(0, 0.3743) # it is not variance but standard deviation as second input
-                w_t_2 = np.random.normal(0, 0.3743)
-            v_t = self.v_t + self.c/50*self.r*(w_t_1 + w_t_2)/2
-            omega_t_state = self.r * (self.phi_1 - self.phi_2) / self.L + self.c*self.r * (w_t_1 - w_t_2) / (self.L)
+            if i%1 ==0:
+                w_t_1 = np.random.normal(0, 0.3743)*2# it is not variance but standard deviation as second input
+                w_t_2 = np.random.normal(0, 0.3743)*2
+            v_t = self.v_t + self.c*self.r*(w_t_1 + w_t_2)/2
+            omega_t_state = self.r * (self.phi_1 - self.phi_2) / self.L + self.c*self.r* (w_t_1 - w_t_2) / (self.L)
             x_t_state = x_t_state + v_t*math.sin(-theta_t_state)*self.dt
             y_t_state = y_t_state + v_t*math.cos(theta_t_state)*self.dt
             theta_t_state = (theta_t_state + 2 * np.pi) % (2 * np.pi) + omega_t_state*self.dt
@@ -175,12 +175,19 @@ def find_H_t(H_t,observation,z_bar,landmark_values, dt): # good
 
 
 class EKF(car_simulation):
-    c1 = 1 # this is for system with all the noise
-    c2 = 1
+    # c1 = .01# this is for system with all the noise
+    # c2 = .01
+    # c3 = 10000
+    # c4 = 10000
+    # c5 = 30000
+    # c6 = .001
+
+    c1 = .01 # this is for system with all the noise
+    c2 = .01
     c3 = 100
     c4 = 100
-    c5 = 300
-    c6 = .001
+    c5 = 9
+    c6 = .6
 
 
     def __init__(self, phi_1, phi_2, dt, L, r, total_time, x, y, theta, width, length):
@@ -247,7 +254,8 @@ class EKF(car_simulation):
         sigma_t_plus_one_temp2 = self.W_t.dot(self.Q).dot(self.W_t.transpose())
         self.sigma_bar = sigma_t_plus_one_temp1 + sigma_t_plus_one_temp2
         self.sigma_bar = .5*self.sigma_bar + .5*np.transpose(self.sigma_bar)
-        # eigval, eigvec = np.linalg.eig(self.sigma_bar)
+        #print(self.sigma_bar)
+        eigval, eigvec = np.linalg.eig(self.sigma_bar)
         # print('controllability eigenvalues')
         # print(eigval)
         return self.sigma_bar
@@ -285,6 +293,7 @@ class EKF(car_simulation):
         self.error[2] = self.error[2]%(2*np.pi)
         if self.error[2] > np.pi:
             self.error[2] -= 2*np.pi
+            print(self.error)
         return self.error
         
     def conditional_mean(self): # good last resort change the model to something linear
@@ -295,6 +304,7 @@ class EKF(car_simulation):
         inner_product = self.kalman_gain.dot(self.H_t)
         self.sigma_hat = (np.eye(5)-inner_product).dot(self.sigma_bar)
         eigval, eigvec = np.linalg.eig(self.sigma_hat)
+        # print(self.sigma_hat)
         # print('observability eigenvalues')
         # print(eigval)
         return self.sigma_hat

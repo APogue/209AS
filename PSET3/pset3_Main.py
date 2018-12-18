@@ -11,18 +11,6 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 
-#no noise
-#noise
-#circle
-#straight
-#change R and Q
-#show eigenvalues
-#seed with high covariance and watch the plot converge
-# in the 6 state case, when you rely too much on the model it fucks up, because you are estimating velocity
-# you can make it better by modeling the slip
-# an option is to sample the state at a higher rate (zoh between samples) because the slip changes every time step, and is amplified it can't catch up to the error
-# use an unscented filter
-# use accelerometer data for higher order integration
 
 state_number = 'five states'
 
@@ -40,10 +28,11 @@ EKF_sim = getattr(mod2, 'EKF')
 
 def plot_covariance_ellipse(z_hat, sigma_hat):
     w,v = np.linalg.eig(sigma_hat)
-    print('all')
-    print(w)
-    Pxy = sigma_hat[0:2, 0:2]
+    # print('all')
+    # print(w)
+    Pxy = sigma_hat
     eigval, eigvec = np.linalg.eig(Pxy)
+    eigval = eigval[1:3]
 
     if eigval[0] >= eigval[1]:
         bigind = 0
@@ -53,8 +42,8 @@ def plot_covariance_ellipse(z_hat, sigma_hat):
         smallind = 0
 
     t = np.arange(0, 2 * math.pi + 0.1, 0.1)
-    print('some')
-    print(eigval)
+    # print('some')
+    # print(eigval)
     a = math.sqrt(np.absolute(eigval[bigind]))
     b = math.sqrt(np.absolute(eigval[smallind]))
     x = [a * math.cos(it) for it in t]
@@ -63,26 +52,29 @@ def plot_covariance_ellipse(z_hat, sigma_hat):
     R = np.array([[math.cos(angle), math.sin(angle)],
                   [-math.sin(angle), math.cos(angle)]])
     fx = R.dot(np.array([[x, y]]))
-    px = np.array(fx[0, :] + z_hat[0][0]).flatten()
-    py = np.array(fx[1, :] + z_hat[0][1]).flatten()
-    plt.plot(px, py, "--r")
-    plt.ylim(250, 700)
-    plt.xlim(280, 320)
+    px = np.array(100*fx[0, :] + z_hat[0][0]).flatten()
+    py = np.array(100*fx[1, :] + z_hat[0][1]).flatten()
+    #print(z_hat[0][0])
+    #print(px)
+    #plt.plot(px, py, "--r")
+    return px, py
+    # plt.ylim(0, 700)
+    # plt.xlim(0, 250)
 
 def main():
     k = 0
-    input1 = 1.5
-    input2 = 4
-    sim_time = 30 # the car travels at 20 mm per second
+    input1 = .3
+    input2 = .3
+    sim_time = 107 # the car travels at 20 mm per second
     # input1 = 6
     # input2 = 6
     # sim_time = 6 # the car travels at 20 mm per second
     wheel_radius = 20
     wheel_base = 85
     time_step = .01
-    x_i = 200
-    y_i = 600
-    theta_i = np.pi
+    x_i = 255
+    y_i = 10
+    theta_i = 0
     width = 500
     length = 750
     car = car_sim(wheel_radius, input1, input2, wheel_base, time_step, sim_time, x_i, y_i, theta_i, width, length)
@@ -108,7 +100,7 @@ def main():
 
     show_animation = False
     show_animation2 = False
-    show_animation3 = True
+    show_animation3 = False
 
     print(__file__ + " start!!")
     while k < car.loops:
@@ -134,10 +126,12 @@ def main():
                      np.array(hxTrue[:, 1]).flatten(), "-b")
             plt.plot(np.array(hxEst[:, 0]).flatten(),
                      np.array(hxEst[:, 1]).flatten(), "-r")
-            plot_covariance_ellipse(z_hat, sigma_hat)
-            plt.ylim(0, 700)
-            plt.xlim(0, 250)
-            plt.axis("equal")
+            #px, py = plot_covariance_ellipse(z_hat, sigma_hat)
+            #print(px)
+            #plt.plot(px, py)
+            # plt.ylim(0, 700)
+            # plt.xlim(249, 251)
+            #plt.axis("equal")
             plt.grid(True)
             plt.pause(.009)
 
@@ -287,26 +281,14 @@ def main():
         plt.ylabel('y (mm)')
         plt.title('EKF Localization')
         ax.legend()
-        plt.savefig('Images/decreasenoisezohfactor50.svg')
+        plt.savefig('Images/decreasenoisezohfactor50.pdf')
         plt.show()
 
 if __name__ == '__main__':
     main()
 
-    #
-    # c1 = .00001 # this is for reduce noise factor 20
-    # c2 = .00001
-    # c3 = 1
-    # c4 = 1
-    # c5 = 1
-    # c6 = 0
 
-    # c1 = .015 # this is for system with all the noise
-    # c2 = .015
-    # c3 = 100
-    # c4 = 1000
-    # c5 = 3
-    # c6 = .001
+
 
 
 

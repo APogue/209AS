@@ -83,7 +83,6 @@ class visualEnvironment(object):
             obstacle = Polygon(N, fc=face_color[V], ec=(0, 0, 0, 1), lw=2)
             self.ax.add_artist(obstacle)
             V += 1
-
     def plotTrajectoryGradient(self):
         '''Plots the state trajectory with gradient colors to show time progression'''
 

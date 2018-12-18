@@ -15,17 +15,18 @@ lot = parkingLot(500, 700)
 lot_plot_info = lot.lot_plot_info()
 
 # instantiate the car (length, width)
-car = myCar(80, 85)
+heading = np.pi/3
+car = myCar(80, 85, heading)
 # car point on wheel axle
-car.p_xy = np.array([350, 350, 1])
+car.p_xy = np.array([500, 400, 1])
 # car heading angle, velocity and angular velocity
-car.heading = 0 * np.pi / 180
+car.heading = 30* np.pi / 180
 car.vel = 1
 car.ang_vel = 1
 
 # car target
 h_count = np.arange(60) * np.pi / 180
-possible_goal_states = set((350, 350, h) for h in h_count)
+possible_goal_states = set((350, 580, h) for h in h_count)
 
 # mock car trajectory
 state_vector = np.zeros((350, 3))
@@ -54,14 +55,45 @@ visual.plotObstacle(obstacle_plot_info, face_color)
 
 # plot the car trajectory
 visual.trajectory = state_vector
-visual.plotTrajectoryGradient()
-visual.plotCar(car.p_xy, [car.car_plot_info()])
+# visual.plotTrajectoryGradient()
+# visual.plotCar(car.p_xy, [car.car_plot_info()])
 
 
 # check the collision detector is working
 car.check_obstacle_collision(obstacle1.obstacle_dictionary())
 car.check_obstacle_collision(obstacle2.obstacle_dictionary())
 car.check_boarder_collision(lot.lot_dictionary())
+print(car.check_boarder_collision(lot.lot_dictionary()))
+
+
+## debug-------------------------------------------------------------------
+obstacle1 = Obstacle(np.array([200, 200, 1]), 50, 100, np.pi / 3)
+obstacle2 = Obstacle(np.array([300, 600, 1]), 50, 50, 0 * np.pi / 3)
+obstacle3 = Obstacle(np.array([10, 100, 1]), 60, 30, -np.pi / 3)
+
+instancelist = [obstacle1.obstacle_dictionary(), obstacle2.obstacle_dictionary(), obstacle3.obstacle_dictionary()]
+
+for i in instancelist:
+    print(car.check_obstacle_collision(i))
+
+# stack the vertices information
+obstacle_plot_info = np.vstack(([obstacle1.obstacle_plot_info()],
+                                [obstacle2.obstacle_plot_info()],
+                                [obstacle3.obstacle_plot_info()]))
+# color the obstacles
+face_color = ((0, 0, 0, 1), (0, 1, 1, 1), (0, 1, 1, 1))
+
+# plot everything to debug
+# instantiate the environment
+visual = visualEnvironment('Collision Detection', lot_plot_info, possible_goal_states)
+
+# plot the obstacles
+visual.plotObstacle(obstacle_plot_info, face_color)
+
+# plot the car
+visual.plotCar(car.p_xy, [car.car_plot_info()])
+
+
 
 
 
