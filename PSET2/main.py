@@ -1,18 +1,18 @@
 import numpy as np
 from visuals import gridWorld
 from pset2 import gridWorlds
-from time import clock
+import time
 
 '''Creates trajectories and plots, also determines values for a trajectory'''
 
 # Pe is the probability for error
-Pe = .1
+Pe = 0
 
 # to only have the heading point downwards in the goal state, input 'not all'
 # this will not work with the initial policy, I didn't design it with that capability
 
 # may be an error due to python interpreter versions, need to quick fix using if statements
-case = 'initial policy' # initial policy, policy iteration, or other
+case = 'policy iteration' # initial policy, policy iteration, or other
 
 example = gridWorlds(6, 6, 12, Pe, 'all')
 
@@ -24,9 +24,9 @@ REWARD_MATRIX[:, 0] = -100
 REWARD_MATRIX[:, -1] = -100
 REWARD_MATRIX[0, :] = -100
 REWARD_MATRIX[-1, :] = -100
-REWARD_MATRIX[2:5, 2] = -10
-REWARD_MATRIX[2:5, 4] = -10
-REWARD_MATRIX[4, 3] = 100
+REWARD_MATRIX[3:5, 3] = -10
+REWARD_MATRIX[2:5, 4] = 0
+REWARD_MATRIX[4, 4] = 1
 
 # create grid world object
 grid_world = gridWorld('6x6 grid', REWARD_MATRIX, possible_goal_states)
@@ -54,18 +54,20 @@ if case == 'initial policy':
         grid_world.updateValue(value)
         trajectory_value.append(value)
     grid_world.plotTrajectoryGradient()
-    grid_world.saveFigure('trajectory', 'Initial Policy Trajectory', '.pdf')
-    grid_world.saveFigure('value', 'Iniital Policy Value', '.pdf')
+    grid_world.saveFigure(grid_world.fig, 'Initial Policy Trajectory', '.pdf')
+    grid_world.saveFigure(grid_world.value_fig, 'Iniital Policy Value', '.pdf')
     print trajectory
     print trajectory_value
 
 elif case == 'policy iteration':
     # generate and plot a trajectory, policy iteration
+    # value0 = np.zeros([example.L, example.W, example.h, 1])
+    begin = time.time()
     state = (1, 4, 6)
     trajectory = [state]
     actionMatrix0 = example.policy_matrix()
-    optPolicyMatrix = example.policy_iteration(actionMatrix0)
-    valuePiStar = example.policy_evaluation(optPolicyMatrix)
+    optPolicyMatrix, value0 = example.policy_iteration(actionMatrix0)
+    valuePiStar = example.policy_evaluation(optPolicyMatrix, value0)
     value = valuePiStar[1][4][6]
     trajectory_value = [value]
     grid_world.updateState(state)
@@ -83,16 +85,19 @@ elif case == 'policy iteration':
         value = valuePiStar[x][y][h]
         grid_world.updateValue(value)
         trajectory_value.append(value)
-        if prev_value == value:
-            break
+        # if prev_value == value:
+        #     break
     grid_world.plotTrajectoryGradient()
-    grid_world.saveFigure('trajectory', 'Policy Iteration Trajectory', '.pdf')
-    grid_world.saveFigure('value', 'Policy Iteration Value', '.pdf')
+    grid_world.saveFigure(grid_world.fig, 'PolicyIterationTrajectoryPe1', '.pdf')
+    grid_world.saveFigure(grid_world.value_fig, 'PolicyIterationValuePe1', '.pdf')
+    end = time.time()
     print trajectory
     print trajectory_value
+    print 'policy iteration timer', end-begin
 
 else:
     # generate and plot a trajectory, value iteration
+    begin = time.time()
     state = (1, 4, 6)
     trajectory = [state]
     optPolicyMatrix, valuePiStar = example.value_iteration()
@@ -113,12 +118,14 @@ else:
         value = valuePiStar[x][y][h]
         grid_world.updateValue(value)
         trajectory_value.append(value)
-        if prev_value == value:
-            break
+        # if prev_value == value:
+        #     break
     grid_world.plotTrajectoryGradient()
-    grid_world.saveFigure('trajectory', 'Value Iteration Trajectory', '.pdf')
-    grid_world.saveFigure('value', 'Value Iteration Value', '.pdf')
+    grid_world.saveFigure(grid_world.fig, 'ValueIterationTrajectoryPe1b', '.pdf')
+    grid_world.saveFigure(grid_world.value_fig, 'ValueIterationValuePe1b', '.pdf')
+    end = time.time()
     print trajectory
     print trajectory_value
+    print 'value iteration timer', end - begin
 
 raw_input('Press Enter when finished')

@@ -1,5 +1,6 @@
 
 import numpy as np
+import time
 from time import clock
 import visuals
 from visuals import gridWorld
@@ -39,12 +40,13 @@ class gridWorlds:
         self.reward = 0
         self.desired_goal = desired_goal
 
+
     def goal(self, heading):
     # used to change goal states
         if heading == 'all':
-            self.goal_states = set((3, 4, h) for h in self.h_count)
+            self.goal_states = set((4, 4, h) for h in self.h_count)
         else:
-            self.goal_states = set((3, 4, h) for h in range(6, 7))
+            self.goal_states = set((4, 4, h) for h in range(6, 7))
         return self.goal_states
 
     def A(self):
@@ -58,13 +60,13 @@ class gridWorlds:
         h = single_state
         if h[0] <= 0 or h[0] >= (self.W-1) or h[1] <= 0 or h[1] >= (self.L-1):
             self.reward = -100
-        elif h[1] in range(2, 5):
-            if h[0] == 2:
+        elif h[1] in range(3, 5):
+            if h[0] == 3:
                 self.reward = -10
-            elif h[0] == 4:
-                self.reward = -10
+            # elif h[0] == 4:
+            #     self.reward = -10
             elif tuple(h) in goal_states:
-                self.reward = 100
+                self.reward = 1
             else:
                 self.reward = 0
         else:
@@ -72,6 +74,7 @@ class gridWorlds:
         return self.reward
     def p_sa(self, single_state1, single_a1, Sp):
     # transition function given a single state input and single action input, output is probability
+        no_action = 1
         correct = 1-2*self.Pe
         incorrect = self.Pe
         state = single_state1[:2]
@@ -98,7 +101,7 @@ class gridWorlds:
                 else:
                     return incorrect
         if single_a1[0] == 'none' and np.allclose(single_state1, Sp):
-            return correct
+            return no_action
         elif single_a1[0] == 'none' and np.allclose(single_state1, Sp) is False:
             return 0
         elif np.linalg.norm(move) <= 1:
@@ -119,9 +122,9 @@ class gridWorlds:
             sample_set = [h_state, hpos_rot, hneg_rot]
             prob_dist = [1-2*Pe1, Pe1, Pe1]
             sample = np.random.choice(3, 1, replace=True, p=prob_dist)
-            ph_state = np.array([sample_set[np.asscalar(sample)]])
+            ph_state = np.array([sample_set[int(sample)]])
             for v in self.card_direc:  # how do i make this a while loop, look for a better way to do this
-                if np.arccos(np.dot(v, self.rot_array[np.asscalar(ph_state)])) <= np.pi/6 + self.epsilon:
+                if np.arccos(np.dot(v, self.rot_array[int(ph_state)])) <= np.pi/6 + self.epsilon:
                     break
             facing = v
             if single_a2[0] == 'forwards':
@@ -133,9 +136,9 @@ class gridWorlds:
             ph_state_new = ph_state
             if single_a2.__len__() == 2:
                 if single_a2[1] == 'left':
-                    ph_state_new = np.array([(np.asscalar(ph_state_new) - 1)%self.h])
+                    ph_state_new = np.array([(int(ph_state_new)- 1)%self.h])
                 else:
-                    ph_state_new = np.array([(np.asscalar(ph_state) + 1)%self.h])
+                    ph_state_new = np.array([(int(ph_state) + 1)%self.h])
             Sp = np.concatenate((pp_state, ph_state_new), axis=0)
             return Sp
 
@@ -237,7 +240,7 @@ class gridWorlds:
                         input = heading
                     else:
                         input = heading_back
-                    cross_heading = np.concatenate((self.rot_array[np.asscalar(input)], np.zeros(1)), axis=0)
+                    cross_heading = np.concatenate((self.rot_array[input], np.zeros(1)), axis=0)
                     cross_next_goal = np.concatenate((goal_vectors_ahead[h][:], np.zeros(1)), axis=0)
                     rotation = np.cross(cross_heading, cross_next_goal)
                     if rotation[2] < 0:
@@ -249,23 +252,25 @@ class gridWorlds:
 
     def policy_matrix(self):
         # turns the single policy output into a dict
+        # uses above function to create a policy dict
         self.policy_0 = {tuple(x): self.policy_pi0(x) for x in self.S}
         return self.policy_0
 
-    def policy_evaluation(self, policy):
+    def policy_evaluation(self, policy, value):
         # returns the evaluation of a policy, value is a 4D array
+        # you are just using the transition function to max over here, that is why the first input is zero
         error = 1
         policy_i = policy
-        value = np.zeros([self.L, self.W, self.h, 1])
+        # value = np.zeros([self.L, self.W, self.h, 1])
         goal_states = self.goal(self.desired_goal)
-        while error > self.epsilon:
+        while error > self.epsilon+.1:  # this is interesting to mess with, it helps the convergence bc you are already building on good values
             prev_value = np.copy(value)
             for state in self.S:
                 value_func = np.zeros(3)
                 action = policy_i[tuple(state)]
                 statek_plus1 = state
-                if tuple(state) not in goal_states:
-                #if state in self.S:
+                # if tuple(state) not in goal_states:
+                if state in self.S:
                     pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1)%self.h
                     pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1)%self.h
                     statek = self.transition_function(0, statek_plus1, action)
@@ -299,20 +304,22 @@ class gridWorlds:
                     Q_state[v] = np.dot(self.p_sa(statek_plus1, action, s_),
                                            (self.R(statek_plus1) + self.discount * value[s_[0]][s_[1]][s_[2]]))
                 Q_value[p] = sum(Q_state)
-            policy_i[tuple(state)] = a[np.asscalar(np.argmax(Q_value))]
+            policy_i[tuple(state)] = a[int(np.argmax(Q_value))]
         return policy_i
 
     def policy_iteration(self, policy0):
         # optimal policy, output is a dict
+        value0 = np.zeros([self.L, self.W, self.h, 1])
         policy = policy0
         old_policy = 1
         new_policy = {}
         while cmp(old_policy, new_policy) != 0:
             old_policy = dict.copy(policy)
-            value = self.policy_evaluation(policy)
+            value = self.policy_evaluation(policy, value0)
             new_policy = self.policy_extraction(value)
             policy = new_policy
-        return policy
+            value0 = value
+        return policy, value0
 
     def value_iteration(self):
         # returns a 4D array of optimal values
@@ -326,8 +333,8 @@ class gridWorlds:
                 Q_state = np.zeros(3)
                 Q_value = np.zeros(7)
                 statek_plus1 = state
-                if tuple(state) not in goal_states:
-                #if state in self.S:
+                # if tuple(state) not in goal_states:
+                if state in self.S:
                     pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1) % self.h
                     pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1) % self.h
                     for p, action in enumerate(a):
@@ -347,3 +354,36 @@ class gridWorlds:
         return optimal_policy, value_star
 
 
+
+if __name__ == '__main__':
+    # Pe is the probability for error
+    Pe = 0
+    example = gridWorlds(6, 6, 12, Pe, 'all')
+    possible_goal_states = example.goal('all')
+
+ # generate and plot a trajectory, policy iteration
+    begin = time.time()
+    state = (1, 4, 6)
+    trajectory = [state]
+    optPolicyMatrix, valuePiStar = example.value_iteration()
+    value = valuePiStar[1][4][6]
+    trajectory_value = [value]
+    while state not in possible_goal_states:
+        prev_value = value
+        action = optPolicyMatrix[state]
+        transition = example.transition_function(Pe, state, action)
+        state = tuple(transition)
+        trajectory.append(state)
+        x = state[0]
+        y = state[1]
+        h = state[2]
+        value = valuePiStar[x][y][h]
+        trajectory_value.append(value)
+        # if prev_value == value:
+        #     break
+    # grid_world.saveFigure('trajectory', 'Value Iteration Trajectory', '.pdf')
+    # grid_world.saveFigure('value', 'Value Iteration Value', '.pdf')
+    end = time.time()
+    print trajectory
+    print trajectory_value
+    print 'value iteration timer', end - begin
