@@ -14,30 +14,31 @@ Pe = 0
 # may be an error due to python interpreter versions, need to quick fix using if statements
 case = 'policy iteration' # initial policy, policy iteration, or other
 
-example = gridWorlds(6, 6, 12, Pe, 'all')
+example = gridWorlds(8, 8, 12, Pe, 'all')
 
 possible_goal_states = example.goal('all')
 
 # make reward matrix
-REWARD_MATRIX = np.zeros((6, 6))
+REWARD_MATRIX = np.zeros((8, 8))
 REWARD_MATRIX[:, 0] = -100
 REWARD_MATRIX[:, -1] = -100
 REWARD_MATRIX[0, :] = -100
 REWARD_MATRIX[-1, :] = -100
-REWARD_MATRIX[3:5, 3] = -10
+REWARD_MATRIX[4:7, 3] = -10
 REWARD_MATRIX[2:5, 4] = 0
-REWARD_MATRIX[4, 4] = 1
+REWARD_MATRIX[6, 5] = 1
 
 # create grid world object
 grid_world = gridWorld('6x6 grid', REWARD_MATRIX, possible_goal_states)
 
 if case == 'initial policy':
     # generate and plot a trajectory, initial policy
-    state = (1, 4, 6)
+    value0 = np.zeros([example.L, example.W, example.h, 1])
+    state = (1, 6, 6)
     trajectory = [state]
     actionMatrix = example.policy_matrix()
-    valuePi0 = example.policy_evaluation(actionMatrix)
-    value = valuePi0[1][4][6]
+    valuePi0 = example.policy_evaluation(actionMatrix,  value0)
+    value = valuePi0[1][6][6]
     trajectory_value = [value]
     grid_world.updateState(state)
     grid_world.updateValue(value)
@@ -53,22 +54,26 @@ if case == 'initial policy':
         value = valuePi0[x][y][h]
         grid_world.updateValue(value)
         trajectory_value.append(value)
+    this = np.zeros(10)
+    for i, v in enumerate(trajectory_value):
+        this[i] = (.9**i)*v
+    that = sum(this)
     grid_world.plotTrajectoryGradient()
     grid_world.saveFigure(grid_world.fig, 'Initial Policy Trajectory', '.pdf')
     grid_world.saveFigure(grid_world.value_fig, 'Iniital Policy Value', '.pdf')
     print trajectory
     print trajectory_value
-
+    print that
 elif case == 'policy iteration':
     # generate and plot a trajectory, policy iteration
     # value0 = np.zeros([example.L, example.W, example.h, 1])
     begin = time.time()
-    state = (1, 4, 6)
+    state = (1, 6, 6)
     trajectory = [state]
     actionMatrix0 = example.policy_matrix()
     optPolicyMatrix, value0 = example.policy_iteration(actionMatrix0)
     valuePiStar = example.policy_evaluation(optPolicyMatrix, value0)
-    value = valuePiStar[1][4][6]
+    value = valuePiStar[1][6][6]
     trajectory_value = [value]
     grid_world.updateState(state)
     grid_world.updateValue(value)
@@ -87,12 +92,17 @@ elif case == 'policy iteration':
         trajectory_value.append(value)
         # if prev_value == value:
         #     break
+    this = np.zeros(30)
+    for i, v in enumerate(trajectory_value):
+        this[i] = (1**i)*v
+    that = sum(this)
     grid_world.plotTrajectoryGradient()
     grid_world.saveFigure(grid_world.fig, 'PolicyIterationTrajectoryPe1', '.pdf')
     grid_world.saveFigure(grid_world.value_fig, 'PolicyIterationValuePe1', '.pdf')
     end = time.time()
     print trajectory
     print trajectory_value
+    print that
     print 'policy iteration timer', end-begin
 
 else:

@@ -13,7 +13,7 @@ class gridWorlds:
     '''Creates a Grid World object based on grid L and W'''
     # necessary attributes used by functions
     discount = 0.9
-    epsilon = 1e-12
+    epsilon = 1e-4
     error = 1
     north = np.array([0, 1])
     south = np.array([0, -1])
@@ -44,9 +44,9 @@ class gridWorlds:
     def goal(self, heading):
     # used to change goal states
         if heading == 'all':
-            self.goal_states = set((4, 4, h) for h in self.h_count)
+            self.goal_states = set((5, 6, h) for h in self.h_count)
         else:
-            self.goal_states = set((4, 4, h) for h in range(6, 7))
+            self.goal_states = set((5, 6, h) for h in range(6, 7))
         return self.goal_states
 
     def A(self):
@@ -60,13 +60,13 @@ class gridWorlds:
         h = single_state
         if h[0] <= 0 or h[0] >= (self.W-1) or h[1] <= 0 or h[1] >= (self.L-1):
             self.reward = -100
-        elif h[1] in range(3, 5):
+        elif h[1] in range(4, 7):
             if h[0] == 3:
                 self.reward = -10
             # elif h[0] == 4:
             #     self.reward = -10
             elif tuple(h) in goal_states:
-                self.reward = 1
+                self.reward = 10
             else:
                 self.reward = 0
         else:
@@ -144,7 +144,7 @@ class gridWorlds:
 
     def policy_pi0(self, single_state4):
     # initial policy, returns a single action given a single state input
-        goal = np.array([3, 4])
+        goal = np.array([5, 6])
         position_state = single_state4[:2]
         if np.allclose(position_state, goal): #to avoid divide by zero if on the goal state
             self.action0 = ['none']
@@ -263,14 +263,14 @@ class gridWorlds:
         policy_i = policy
         # value = np.zeros([self.L, self.W, self.h, 1])
         goal_states = self.goal(self.desired_goal)
-        while error > self.epsilon+.1:  # this is interesting to mess with, it helps the convergence bc you are already building on good values
+        while error > self.epsilon:  # this is interesting to mess with, it helps the convergence bc you are already building on good values
             prev_value = np.copy(value)
             for state in self.S:
                 value_func = np.zeros(3)
                 action = policy_i[tuple(state)]
                 statek_plus1 = state
-                # if tuple(state) not in goal_states:
-                if state in self.S:
+                if tuple(state) not in goal_states:
+                # if state in self.S:
                     pre_rotate_right = (np.array([0, 0, 1]) + statek_plus1)%self.h
                     pre_rotate_left = (np.array([0, 0, -1]) + statek_plus1)%self.h
                     statek = self.transition_function(0, statek_plus1, action)
